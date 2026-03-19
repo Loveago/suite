@@ -18,9 +18,12 @@ model Property {
 model Room {
   id          String    @id @default(uuid())
   name        String
+  category    String
+  roomNumber  String    @unique
   description String
   price       Float
   images      String[]
+  isBooked    Boolean   @default(false)
   propertyId  String
   property    Property  @relation(fields: [propertyId], references: [id])
   bookings    Booking[]

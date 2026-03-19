@@ -10,86 +10,74 @@ async function main() {
   // Create the property
   const property = await prisma.property.create({
     data: {
-      name: 'THE SUIT',
+      name: 'THE SUITE',
       description: 'A luxury boutique property offering premium rooms with world-class amenities.',
     },
   });
 
-  // Create rooms
-  const rooms = [
-    {
-      name: 'Royal Suite',
-      description:
-        'Experience unparalleled luxury in our Royal Suite. Featuring a king-size bed, panoramic city views, a marble bathroom with rain shower, and a private lounge area. Perfect for those who demand nothing but the finest.',
-      price: 350,
-      images: [
-        'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&q=80',
-        'https://images.unsplash.com/photo-1591088398332-8a7791972843?w=1200&q=80',
-        'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1200&q=80',
-      ],
-      propertyId: property.id,
-    },
-    {
-      name: 'Ocean View Room',
-      description:
-        'Wake up to breathtaking ocean views in this elegantly appointed room. Features a queen-size bed, floor-to-ceiling windows, a luxurious bathroom, and a private balcony overlooking the sea.',
-      price: 280,
-      images: [
-        '/uploads/rooms/ocean-view-1.jpg',
-        '/uploads/rooms/ocean-view-2.jpg',
-        '/uploads/rooms/ocean-view-3.jpg',
-      ],
-      propertyId: property.id,
-    },
-    {
-      name: 'Penthouse Loft',
-      description:
-        'Our crown jewel — the Penthouse Loft spans two floors with a spiral staircase, rooftop terrace, jacuzzi, and 360-degree views. The ultimate in urban luxury living.',
-      price: 450,
-      images: [
-        '/uploads/rooms/penthouse-1.jpg',
-        '/uploads/rooms/penthouse-2.jpg',
-        '/uploads/rooms/penthouse-3.jpg',
-      ],
-      propertyId: property.id,
-    },
-    {
-      name: 'Garden Retreat',
-      description:
-        'A serene ground-floor suite surrounded by lush gardens. Features a private patio, outdoor shower, king-size bed, and direct garden access for a tranquil escape.',
-      price: 220,
-      images: [
-        '/uploads/rooms/garden-1.jpg',
-        '/uploads/rooms/garden-2.jpg',
-        '/uploads/rooms/garden-3.jpg',
-      ],
-      propertyId: property.id,
-    },
-    {
-      name: 'Executive Suite',
-      description:
-        'Designed for the discerning business traveler. Includes a spacious work desk, high-speed WiFi, a sitting area, mini bar, and premium bedding for restful nights.',
-      price: 310,
-      images: [
-        '/uploads/rooms/executive-1.jpg',
-        '/uploads/rooms/executive-2.jpg',
-        '/uploads/rooms/executive-3.jpg',
-      ],
-      propertyId: property.id,
-    },
-    {
-      name: 'Honeymoon Suite',
-      description:
-        'Romance awaits in our Honeymoon Suite. Rose petal turndown service, champagne on arrival, a heart-shaped jacuzzi, and candlelit ambiance create the perfect getaway for couples.',
-      price: 400,
-      images: [
-        '/uploads/rooms/honeymoon-1.jpg',
-        '/uploads/rooms/honeymoon-2.jpg',
-        '/uploads/rooms/honeymoon-3.jpg',
-      ],
-      propertyId: property.id,
-    },
+  const categoryImages = {
+    Small: [
+      'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1505693538694-c5b2d7f3f5f6?auto=format&fit=crop&w=1200&q=80',
+    ],
+    Medium: [
+      'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1505693538694-c5b2d7f3f5f6?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=1200&q=80',
+    ],
+    Large: [
+      'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1505692952047-1a78307da8f2?auto=format&fit=crop&w=1200&q=80',
+    ],
+    VIP: [
+      'https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1505692952047-1a78307da8f2?auto=format&fit=crop&w=1200&q=80',
+    ],
+  };
+
+  const categoryDescriptions = {
+    Small:
+      'An elegant compact room with refined finishes, premium bedding, curated lighting, and all the essentials for a polished luxury stay.',
+    Medium:
+      'A more spacious retreat with elevated comfort, stylish detailing, and balanced room proportions for business or leisure travel.',
+    Large:
+      'A generous luxury room offering expanded living space, premium interiors, and a more indulgent stay experience.',
+    VIP:
+      'Our most exclusive category, crafted for guests who want superior privacy, prestige, and a truly elevated experience.',
+  };
+
+  const roomCatalog = [
+    { category: 'Small', roomNumber: 'K01', price: 800 },
+    { category: 'VIP', roomNumber: 'K02', price: 1500 },
+    { category: 'Small', roomNumber: 'K03', price: 800 },
+    { category: 'Medium', roomNumber: 'K04', price: 1100 },
+    { category: 'Small', roomNumber: 'K05', price: 800 },
+    { category: 'Large', roomNumber: 'K06', price: 1300 },
+    { category: 'Small', roomNumber: 'K07', price: 800 },
+    { category: 'Small', roomNumber: 'K08', price: 800 },
+    { category: 'Small', roomNumber: 'K09', price: 800 },
+    { category: 'Small', roomNumber: 'K10', price: 800 },
+    { category: 'Small', roomNumber: 'K11', price: 800 },
+    { category: 'Large', roomNumber: 'K12', price: 1300 },
+    { category: 'Small', roomNumber: 'K13', price: 800 },
+    { category: 'Large', roomNumber: 'K14', price: 1300 },
+    { category: 'Large', roomNumber: 'K15', price: 1300 },
+    { category: 'Small', roomNumber: 'K16', price: 800 },
+    { category: 'Large', roomNumber: 'K17', price: 1300 },
   ];
+
+  const rooms = roomCatalog.map((room) => ({
+    name: `${room.category} Room`,
+    category: room.category,
+    roomNumber: room.roomNumber,
+    description: categoryDescriptions[room.category],
+    price: room.price,
+    images: categoryImages[room.category],
+    propertyId: property.id,
+  }));
 
   for (const room of rooms) {
     await prisma.room.create({ data: room });

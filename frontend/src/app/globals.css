@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-gold: #C9A646;
+  --color-gold-light: #d4b85c;
+  --color-gold-dark: #a8882e;
+  --color-dark: #0a0a0a;
+  --color-dark-lighter: #141414;
+  --color-dark-card: #1a1a1a;
+  --color-dark-border: #2a2a2a;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+  --navbar-height: 4rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #0a0a0a;
+  color: #ededed;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C9A646;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d4b85c;
+}
+
+::selection {
+  background: rgba(201, 166, 70, 0.3);
+  color: #fff;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+@media (max-width: 768px) {
+  button,
+  input,
+  select,
+  textarea {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  button,
+  [role='button'],
+  a[class*='px-'],
+  a[class*='py-'] {
+    min-height: 48px;
+  }
+}
+
+/* Offset for fixed navbar */
+body > main {
+  padding-top: var(--navbar-height);
+}
+
+/* Ensure page headers are centered */
+body > main h1,
+body > main h2 {
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --navbar-height: 5rem;
+  }
+}
+
+/* Page transition wrapper */
+.page-transition-wrapper {
+  min-height: 100vh;
+}

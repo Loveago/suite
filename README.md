@@ -1,4 +1,4 @@
-# THE SUIT — Luxury Room Booking Platform
+# THE SUITE — Luxury Room Booking Platform
 
 A premium, Airbnb-inspired room booking platform for a single luxury property. Built with a focus on fluid animations, elegant UI, and seamless booking flow.
 

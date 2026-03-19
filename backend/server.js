@@ -19,9 +19,9 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/gallery', galleryRoutes);
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'THE SUIT API is running' });
+  res.json({ status: 'ok', message: 'THE SUITE API is running' });
 });
 
 app.listen(PORT, () => {
-  console.log(`THE SUIT backend running on port ${PORT}`);
+  console.log(`THE SUITE backend running on port ${PORT}`);
 });

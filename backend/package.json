@@ -1,7 +1,7 @@
 {
   "name": "the-suit-backend",
   "version": "1.0.0",
-  "description": "THE SUIT - Luxury Room Booking Platform Backend",
+  "description": "THE SUITE - Luxury Room Booking Platform Backend",
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",

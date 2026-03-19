@@ -5,7 +5,7 @@ const getAllRooms = async (req, res) => {
   try {
     const rooms = await prisma.room.findMany({
       include: { property: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ category: 'asc' }, { roomNumber: 'asc' }],
     });
     res.json(rooms);
   } catch (error) {
@@ -28,9 +28,18 @@ const getRoomById = async (req, res) => {
 
 const createRoom = async (req, res) => {
   try {
-    const { name, description, price, images, propertyId } = req.body;
+    const { name, category, roomNumber, description, price, images, isBooked, propertyId } = req.body;
     const room = await prisma.room.create({
-      data: { name, description, price: parseFloat(price), images: images || [], propertyId },
+      data: {
+        name,
+        category,
+        roomNumber,
+        description,
+        price: parseFloat(price),
+        images: images || [],
+        isBooked: Boolean(isBooked),
+        propertyId,
+      },
     });
     res.status(201).json(room);
   } catch (error) {
@@ -40,12 +49,15 @@ const createRoom = async (req, res) => {
 
 const updateRoom = async (req, res) => {
   try {
-    const { name, description, price, images } = req.body;
+    const { name, category, roomNumber, description, price, images, isBooked } = req.body;
     const data = {};
     if (name !== undefined) data.name = name;
+    if (category !== undefined) data.category = category;
+    if (roomNumber !== undefined) data.roomNumber = roomNumber;
     if (description !== undefined) data.description = description;
     if (price !== undefined) data.price = parseFloat(price);
     if (images !== undefined) data.images = images;
+    if (isBooked !== undefined) data.isBooked = Boolean(isBooked);
 
     const room = await prisma.room.update({
       where: { id: req.params.id },

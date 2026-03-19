@@ -3,10 +3,7 @@ const prisma = new PrismaClient();
 
 const createBooking = async (req, res) => {
   try {
-    const { roomId, checkIn, checkOut, guestName, guestEmail, guestPhone, guests } = req.body;
-
-    const room = await prisma.room.findUnique({ where: { id: roomId } });
-    if (!room) return res.status(404).json({ error: 'Room not found' });
+    const { roomId, roomCategory, checkIn, checkOut, guestName, guestEmail, guestPhone, guests } = req.body;
 
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
@@ -15,27 +12,56 @@ const createBooking = async (req, res) => {
       return res.status(400).json({ error: 'Check-out must be after check-in' });
     }
 
-    const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
-    const totalPrice = nights * room.price;
+    if (!roomId && !roomCategory) {
+      return res.status(400).json({ error: 'Room or room category is required' });
+    }
 
-    // Check for overlapping bookings
-    const overlapping = await prisma.booking.findFirst({
+    const overlappingRoomIds = await prisma.booking.findMany({
       where: {
-        roomId,
         status: { not: 'cancelled' },
         OR: [
           { checkIn: { lt: checkOutDate }, checkOut: { gt: checkInDate } },
         ],
       },
+      select: { roomId: true },
     });
 
-    if (overlapping) {
-      return res.status(409).json({ error: 'Room is not available for the selected dates' });
+    const unavailableRoomIds = overlappingRoomIds.map((booking) => booking.roomId);
+
+    let room;
+
+    if (roomId) {
+      room = await prisma.room.findUnique({ where: { id: roomId } });
+      if (!room) return res.status(404).json({ error: 'Room not found' });
+      if (room.isBooked) {
+        return res.status(409).json({ error: 'Selected room is currently marked as booked' });
+      }
+      if (unavailableRoomIds.includes(room.id)) {
+        return res.status(409).json({ error: 'Selected room is not available for the selected dates' });
+      }
+    } else {
+      const availableRooms = await prisma.room.findMany({
+        where: {
+          category: roomCategory,
+          isBooked: false,
+          id: { notIn: unavailableRoomIds },
+        },
+        orderBy: { roomNumber: 'asc' },
+      });
+
+      if (availableRooms.length === 0) {
+        return res.status(409).json({ error: 'No available rooms in this category for the selected dates' });
+      }
+
+      room = availableRooms[Math.floor(Math.random() * availableRooms.length)];
     }
+
+    const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+    const totalPrice = nights * room.price;
 
     const booking = await prisma.booking.create({
       data: {
-        roomId,
+        roomId: room.id,
         checkIn: checkInDate,
         checkOut: checkOutDate,
         totalPrice,
