@@ -1,0 +1,225 @@
+Project Name: THE SUIT
+
+Objective:
+Build a luxury room booking platform for a single property (for now), inspired by Airbnb. The platform should feel premium, smooth, and highly responsive, with a strong focus on UI animations and mobile usability.
+
+IMPORTANT:
+This version supports only ONE property. Users interact directly with rooms. The system must still be structured in a way that allows adding multiple properties later without major refactoring.
+
+---
+
+TECH STACK
+
+---
+
+Frontend:
+
+* Next.js (App Router)
+* Tailwind CSS
+* Framer Motion
+* Zustand
+
+Backend:
+
+* Node.js (Express)
+* Prisma ORM
+* PostgreSQL
+
+Project Structure:
+/frontend
+/backend
+
+---
+
+BACKEND REQUIREMENTS
+
+---
+
+* Express server
+* Prisma setup
+* Modular structure:
+  /controllers
+  /routes
+  /middlewares
+  /uploads
+
+---
+
+IMAGE STORAGE (LOCAL)
+
+---
+
+* Use multer
+* Store in:
+  /uploads/rooms
+* Serve statically:
+  app.use('/uploads', express.static('uploads'))
+* Save image paths in DB
+
+---
+
+DATABASE (PRISMA)
+
+---
+
+Property (internal use only):
+
+* id
+* name
+* description
+
+Room:
+
+* id
+* name
+* description
+* price
+* images (string array)
+* propertyId
+
+Booking:
+
+* id
+* userId (nullable)
+* roomId
+* checkIn
+* checkOut
+* totalPrice
+* status
+* createdAt
+
+---
+
+API ENDPOINTS
+
+---
+
+ROOMS:
+
+* GET /rooms
+* GET /rooms/:id
+* POST /rooms (admin)
+* PUT /rooms/:id (admin)
+* DELETE /rooms/:id (admin)
+
+BOOKINGS:
+
+* POST /bookings
+* GET /bookings (admin)
+* PUT /bookings/:id
+
+UPLOADS:
+
+* POST /upload/room-images
+
+---
+
+FRONTEND REQUIREMENTS
+
+---
+
+THEME:
+
+* Luxury black + gold (#C9A646)
+* Clean, minimal, elegant
+* Premium typography
+* Smooth transitions
+* High-contrast readability 
+* Consistent spacing and padding
+
+
+---
+
+PAGES
+
+---
+
+Homepage:
+
+* Hero with booking bar (dates + guests)
+* Featured rooms (grid)
+* Smooth animations
+* Quick booking UX
+
+Rooms Page:
+
+* Grid of all rooms
+* Filters (price)
+
+Room Details Page:
+
+* Image gallery
+* Room details
+* Booking button
+
+Booking Flow:
+
+1. Select room
+2. Select dates
+3. Enter details
+4. Guest or account
+5. Confirm
+
+---
+
+ADMIN PANEL
+
+---
+
+* Manage rooms only (no property UI yet)
+* Upload images
+* Edit pricing
+* Manage bookings
+
+---
+
+ANIMATIONS
+
+---
+
+Use Framer Motion:
+
+* Page transitions
+* Card hover (scale + shadow)
+* Image zoom
+* Smooth loading states
+
+---
+
+MOBILE
+
+---
+
+* Mobile-first
+* Sticky booking bar
+* Responsive layouts
+
+---
+
+PLACEHOLDERS
+
+---
+
+* Use locally stored placeholder images
+* High-quality luxury interiors
+* You can download from internet
+---
+
+OUTPUT
+
+---
+
+* Full project scaffold
+* Backend + frontend setup
+* Prisma schema
+* API routes
+* UI components
+* Animation examples
+
+---
+
+GOAL
+
+---
+
+Deliver a premium, fluid, Airbnb-like experience focused on a single luxury property with seamless booking and strong UI polish.
