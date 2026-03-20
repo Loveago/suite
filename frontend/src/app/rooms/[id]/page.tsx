@@ -52,7 +52,7 @@ export default function RoomDetailPage() {
   };
 
   const handleBookNow = () => {
-    if (!room) return;
+    if (!room || room.isBooked) return;
     setStoreRoom(room.id, room.name, room.price);
     if (checkIn && checkOut) setDates(checkIn, checkOut);
     setStoreGuests(guests);
@@ -196,6 +196,16 @@ export default function RoomDetailPage() {
               <span className="text-gray-400 text-base font-normal">/ night</span>
             </p>
 
+            <div
+              className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border mb-6 ${
+                room.isBooked
+                  ? 'bg-red-500/15 text-red-200 border-red-400/35'
+                  : 'bg-emerald-500/15 text-emerald-200 border-emerald-400/35'
+              }`}
+            >
+              {room.isBooked ? 'Booked - unavailable right now' : 'Available for booking'}
+            </div>
+
             <div className="prose prose-invert max-w-none mb-8">
               {room.description.split('\n').map((line, i) => (
                 <p key={i} className="text-gray-300 text-sm leading-relaxed mb-2">
@@ -208,6 +218,11 @@ export default function RoomDetailPage() {
             <div className="bg-dark-card border border-dark-border rounded-xl p-6">
               <h3 className="text-white font-semibold mb-4 text-lg">Reserve This Room</h3>
               <div className="space-y-4">
+                {room.isBooked && (
+                  <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                    This room is already booked. Please choose another room.
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs text-gray-400 mb-1 tracking-wide">CHECK IN</label>
@@ -216,6 +231,7 @@ export default function RoomDetailPage() {
                       value={checkIn}
                       onChange={(e) => setCheckIn(e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
+                      disabled={room.isBooked}
                       className="w-full bg-dark border border-dark-border rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-gold transition-colors"
                     />
                   </div>
@@ -226,6 +242,7 @@ export default function RoomDetailPage() {
                       value={checkOut}
                       onChange={(e) => setCheckOut(e.target.value)}
                       min={checkIn || new Date().toISOString().split('T')[0]}
+                      disabled={room.isBooked}
                       className="w-full bg-dark border border-dark-border rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-gold transition-colors"
                     />
                   </div>
@@ -235,6 +252,7 @@ export default function RoomDetailPage() {
                   <select
                     value={guests}
                     onChange={(e) => setGuests(Number(e.target.value))}
+                    disabled={room.isBooked}
                     className="w-full bg-dark border border-dark-border rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-gold transition-colors cursor-pointer"
                   >
                     {[1, 2, 3, 4, 5, 6].map((n) => (
@@ -265,12 +283,17 @@ export default function RoomDetailPage() {
                 )}
 
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={room.isBooked ? undefined : { scale: 1.02 }}
+                  whileTap={room.isBooked ? undefined : { scale: 0.98 }}
                   onClick={handleBookNow}
-                  className="w-full bg-gold hover:bg-gold-light text-dark font-semibold py-3 rounded-lg transition-colors duration-300 text-sm tracking-wide mt-2"
+                  disabled={room.isBooked}
+                  className={`w-full font-semibold py-3 rounded-lg transition-colors duration-300 text-sm tracking-wide mt-2 ${
+                    room.isBooked
+                      ? 'bg-dark border border-red-500/30 text-red-200 cursor-not-allowed'
+                      : 'bg-gold hover:bg-gold-light text-dark'
+                  }`}
                 >
-                  Book Now
+                  {room.isBooked ? 'Room Unavailable' : 'Book Now'}
                 </motion.button>
               </div>
             </div>
@@ -298,12 +321,17 @@ export default function RoomDetailPage() {
             )}
           </div>
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={room.isBooked ? undefined : { scale: 1.05 }}
+            whileTap={room.isBooked ? undefined : { scale: 0.95 }}
             onClick={handleBookNow}
-            className="bg-gold hover:bg-gold-light text-dark font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm"
+            disabled={room.isBooked}
+            className={`font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm ${
+              room.isBooked
+                ? 'bg-dark border border-red-500/30 text-red-200 cursor-not-allowed'
+                : 'bg-gold hover:bg-gold-light text-dark'
+            }`}
           >
-            Book Now
+            {room.isBooked ? 'Unavailable' : 'Book Now'}
           </motion.button>
         </div>
       </motion.div>

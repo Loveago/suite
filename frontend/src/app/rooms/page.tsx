@@ -208,13 +208,17 @@ export default function RoomsPage() {
                         >
                           <Link href={`/rooms/${room.id}`}>
                             <motion.div
-                              whileHover={{ y: -8, scale: 1.01 }}
+                              whileHover={room.isBooked ? undefined : { y: -8, scale: 1.01 }}
                               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                              className="bg-dark-card border border-dark-border rounded-2xl overflow-hidden group cursor-pointer h-full"
+                              className={`bg-dark-card border rounded-2xl overflow-hidden group h-full ${
+                                room.isBooked ? 'border-red-500/30 opacity-80' : 'border-dark-border cursor-pointer'
+                              }`}
                             >
                               <div className="relative h-56 sm:h-64 overflow-hidden">
                                 <div
-                                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                                  className={`absolute inset-0 bg-cover bg-center transition-transform duration-700 ${
+                                    room.isBooked ? '' : 'group-hover:scale-110'
+                                  }`}
                                   style={{ backgroundImage: `url(${getRoomImage(room)})` }}
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
@@ -223,6 +227,15 @@ export default function RoomsPage() {
                                 </div>
                                 <div className="absolute top-3 right-3 bg-gold text-dark text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
                                   {formatCurrency(room.price)}/night
+                                </div>
+                                <div
+                                  className={`absolute bottom-3 left-3 text-xs font-semibold px-3 py-1.5 rounded-full border ${
+                                    room.isBooked
+                                      ? 'bg-red-500/20 text-red-200 border-red-400/40'
+                                      : 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40'
+                                  }`}
+                                >
+                                  {room.isBooked ? 'Booked' : 'Available'}
                                 </div>
                               </div>
                               <div className="p-5">
@@ -234,10 +247,14 @@ export default function RoomsPage() {
                                 <div className="flex items-center justify-between gap-4">
                                   <span className="text-gray-500 text-xs">Images: {room.images.length}</span>
                                   <motion.div
-                                    whileHover={{ scale: 1.04 }}
-                                    className="inline-block bg-gold/10 border border-gold text-gold text-xs font-medium px-4 py-2 rounded-lg hover:bg-gold hover:text-dark transition-all duration-300"
+                                    whileHover={room.isBooked ? undefined : { scale: 1.04 }}
+                                    className={`inline-block text-xs font-medium px-4 py-2 rounded-lg transition-all duration-300 ${
+                                      room.isBooked
+                                        ? 'bg-red-500/10 border border-red-400/40 text-red-200'
+                                        : 'bg-gold/10 border border-gold text-gold hover:bg-gold hover:text-dark'
+                                    }`}
                                   >
-                                    View Details
+                                    {room.isBooked ? 'View Details' : 'Book Room'}
                                   </motion.div>
                                 </div>
                               </div>

@@ -155,7 +155,7 @@ export default function Home() {
   return (
     <PageTransition>
       {/* Hero Section */}
-      <section className="relative h-[70vh] sm:h-[80vh] overflow-hidden">
+      <section className="relative min-h-[78vh] sm:min-h-[88vh] overflow-hidden">
         {heroImages.map((img, i) => (
           <motion.div
             key={i}
@@ -165,28 +165,37 @@ export default function Home() {
             transition={{ duration: 1.2, ease: 'easeInOut' }}
           >
             <div
-              className="absolute inset-0 bg-cover bg-center"
+              className="absolute inset-0 bg-cover bg-center scale-[1.02]"
               style={{ backgroundImage: `url(${img})` }}
             />
           </motion.div>
         ))}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-dark" />
+        <div className="absolute inset-0 bg-gradient-to-br from-black/78 via-black/48 to-dark" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(201,166,70,0.16),transparent_38%)]" />
         
-        <div className="relative z-10 h-full flex flex-col items-center justify-center px-4">
+        <div className="relative z-10 flex min-h-[78vh] sm:min-h-[88vh] flex-col items-center justify-center px-4 pb-10 pt-16 sm:pb-14 sm:pt-24">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="text-center"
+            className="text-center max-w-5xl"
           >
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-white mb-2">
+            <p className="mb-4 inline-flex items-center rounded-full border border-gold/35 bg-black/25 px-4 py-2 text-[11px] uppercase tracking-[0.3em] text-gold/90 backdrop-blur-md">
+              Refined stays. Seamless booking. Signature comfort.
+            </p>
+            <h1 className="text-[clamp(3rem,7vw,6.4rem)] font-light text-white mb-1 leading-[0.92] tracking-[-0.04em] drop-shadow-[0_10px_40px_rgba(0,0,0,0.45)]">
               Experience{' '}
-              <span className="italic font-serif">Luxury</span>
+              <span className="italic font-serif text-gold-light">Luxury</span>
             </h1>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light text-white">
+            <h2 className="text-[clamp(2.2rem,5vw,4.8rem)] font-light text-white tracking-[-0.03em]">
               at{' '}
-              <span className="text-gold font-bold tracking-wider">THE SUITE</span>
+              <span className="bg-gradient-to-r from-gold-light via-gold to-gold-dark bg-clip-text font-bold tracking-[0.14em] text-transparent">
+                THE SUITE
+              </span>
             </h2>
+            <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-gray-200/85 sm:text-base">
+              Discover elegant rooms, effortless reservations, and a boutique luxury experience designed for comfort from the first click.
+            </p>
           </motion.div>
 
           {/* Booking Bar */}
@@ -194,9 +203,18 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="mt-10 w-full max-w-5xl"
+            className="mt-10 w-full max-w-6xl"
           >
-            <div className="bg-black/70 backdrop-blur-md border border-gold/35 rounded-2xl p-3 sm:p-4 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+            <div className="overflow-hidden rounded-[28px] border border-gold/30 bg-[linear-gradient(180deg,rgba(18,18,18,0.92),rgba(10,10,10,0.96))] p-3 sm:p-4 shadow-[0_28px_90px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/6 bg-white/[0.02] px-4 py-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-gold/80">Luxury Reservation</p>
+                  <p className="mt-1 text-sm text-gray-300">Secure your preferred room in a few elegant steps.</p>
+                </div>
+                <div className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-emerald-200">
+                  Instant confirmation
+                </div>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_0.8fr_auto] gap-3">
                 <div className="relative">
                   <label className="block text-[11px] text-gold/80 mb-1 tracking-[0.16em]">CHECK IN</label>
@@ -205,7 +223,7 @@ export default function Home() {
                     value={checkIn}
                     onChange={(e) => setCheckIn(e.target.value)}
                     min={new Date().toISOString().split('T')[0]}
-                    className="w-full h-12 bg-dark/90 border border-gold/35 rounded-lg px-4 text-white text-sm focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/60 transition-all"
+                    className="luxury-date-input w-full h-14 bg-white/[0.03] border border-gold/20 rounded-2xl px-4 text-white text-sm shadow-inner shadow-black/20 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/25 transition-all"
                   />
                 </div>
                 <div className="relative">
@@ -215,7 +233,7 @@ export default function Home() {
                     value={checkOut}
                     onChange={(e) => setCheckOut(e.target.value)}
                     min={checkIn || new Date().toISOString().split('T')[0]}
-                    className="w-full h-12 bg-dark/90 border border-gold/35 rounded-lg px-4 text-white text-sm focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/60 transition-all"
+                    className="luxury-date-input w-full h-14 bg-white/[0.03] border border-gold/20 rounded-2xl px-4 text-white text-sm shadow-inner shadow-black/20 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/25 transition-all"
                   />
                 </div>
                 <div className="relative">
@@ -223,7 +241,7 @@ export default function Home() {
                   <select
                     value={guests}
                     onChange={(e) => setGuests(Number(e.target.value))}
-                    className="w-full h-12 bg-dark/90 border border-gold/35 rounded-lg px-4 pr-9 text-white text-sm focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/60 transition-all appearance-none cursor-pointer"
+                    className="w-full h-14 bg-white/[0.03] border border-gold/20 rounded-2xl px-4 pr-11 text-white text-sm shadow-inner shadow-black/20 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/25 transition-all appearance-none cursor-pointer"
                   >
                     {[1, 2, 3, 4, 5, 6].map((n) => (
                       <option key={n} value={n}>
@@ -238,16 +256,16 @@ export default function Home() {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={handleSearch}
-                    className="w-full md:w-40 h-12 bg-gold hover:bg-gold-light text-dark font-semibold rounded-lg transition-colors duration-300 text-sm tracking-wide"
+                    className="w-full md:w-44 h-14 rounded-2xl bg-gradient-to-r from-gold-light via-gold to-gold-dark text-dark font-semibold transition-all duration-300 text-sm tracking-[0.14em] uppercase shadow-[0_14px_34px_rgba(201,166,70,0.28)] hover:brightness-105"
                   >
                     Search
                   </motion.button>
                 </div>
               </div>
 
-              <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-gray-300">
-                {['Instant confirmation', 'Free cancellation within 24h', 'Concierge included'].map((note) => (
-                  <span key={note} className="inline-flex items-center rounded-full border border-gold/25 bg-black/35 px-3 py-1">
+              <div className="mt-4 flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-gray-300">
+                {['Free cancellation within 24h', 'Concierge included', 'Curated luxury stays'].map((note) => (
+                  <span key={note} className="inline-flex items-center rounded-full border border-gold/20 bg-white/[0.03] px-3 py-1.5">
                     {note}
                   </span>
                 ))}
