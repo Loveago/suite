@@ -12,11 +12,13 @@ interface BookingState {
   guestName: string;
   guestEmail: string;
   guestPhone: string;
+  paymentMethod: string;
   step: number;
   setRoom: (id: string, name: string, price: number) => void;
   setDates: (checkIn: string, checkOut: string) => void;
   setGuests: (guests: number) => void;
   setGuestDetails: (name: string, email: string, phone: string) => void;
+  setPaymentMethod: (paymentMethod: string) => void;
   setStep: (step: number) => void;
   reset: () => void;
   getNights: () => number;
@@ -33,11 +35,13 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   guestName: '',
   guestEmail: '',
   guestPhone: '',
+  paymentMethod: 'cash_on_arrival',
   step: 1,
   setRoom: (id, name, price) => set({ roomId: id, roomName: name, roomPrice: price }),
   setDates: (checkIn, checkOut) => set({ checkIn, checkOut }),
   setGuests: (guests) => set({ guests }),
   setGuestDetails: (guestName, guestEmail, guestPhone) => set({ guestName, guestEmail, guestPhone }),
+  setPaymentMethod: (paymentMethod) => set({ paymentMethod }),
   setStep: (step) => set({ step }),
   reset: () =>
     set({
@@ -50,6 +54,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       guestName: '',
       guestEmail: '',
       guestPhone: '',
+      paymentMethod: 'cash_on_arrival',
       step: 1,
     }),
   getNights: () => {

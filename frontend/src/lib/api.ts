@@ -31,6 +31,9 @@ export interface Booking {
   guestPhone: string | null;
   guests: number;
   status: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  receivedAt: string | null;
   createdAt: string;
   room?: Room;
 }
@@ -77,8 +80,9 @@ export const api = {
       guestEmail?: string;
       guestPhone?: string;
       guests?: number;
+      paymentMethod?: string;
     }) => fetchAPI<Booking>('/bookings', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: { status: string }) =>
+    update: (id: string, data: { status?: string; paymentStatus?: string; paymentMethod?: string }) =>
       fetchAPI<Booking>(`/bookings/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   },
   upload: {

@@ -59,6 +59,7 @@ export default function BookingPage() {
         guestEmail: store.guestEmail,
         guestPhone: store.guestPhone,
         guests: store.guests,
+        paymentMethod: store.paymentMethod,
       });
       setBookingId(booking.id);
       setBookingComplete(true);
@@ -129,6 +130,10 @@ export default function BookingPage() {
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Check-out</span>
                 <span className="text-white">{store.checkOut}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Payment</span>
+                <span className="text-white">Cash on arrival</span>
               </div>
               <div className="flex justify-between text-sm font-semibold pt-2 border-t border-dark-border">
                 <span className="text-white">Total</span>
@@ -297,6 +302,16 @@ export default function BookingPage() {
                         className="w-full bg-dark border border-dark-border rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-gold transition-colors placeholder:text-gray-600"
                       />
                     </div>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1 tracking-wide">PAYMENT</label>
+                      <select
+                        value={store.paymentMethod}
+                        onChange={(e) => store.setPaymentMethod(e.target.value)}
+                        className="w-full bg-dark border border-dark-border rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-gold transition-colors cursor-pointer"
+                      >
+                        <option value="cash_on_arrival">Cash on arrival</option>
+                      </select>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -343,6 +358,10 @@ export default function BookingPage() {
                           <span className="text-white">{store.guestPhone}</span>
                         </div>
                       )}
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Payment</span>
+                        <span className="text-white">{store.paymentMethod === 'cash_on_arrival' ? 'Cash on arrival' : store.paymentMethod}</span>
+                      </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Nights</span>
                         <span className="text-white">{store.getNights()}</span>

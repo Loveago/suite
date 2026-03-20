@@ -14,7 +14,7 @@ const roomBackdropImages = [
   'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?auto=format&fit=crop&w=2000&q=80',
 ];
 
-const statusFilters = ['all', 'confirmed', 'pending', 'cancelled'] as const;
+const statusFilters = ['all', 'confirmed', 'pending', 'received', 'cancelled'] as const;
 type StatusFilter = (typeof statusFilters)[number];
 
 export default function BookingsPage() {
@@ -79,6 +79,7 @@ export default function BookingsPage() {
     total: searchedBookings.length,
     confirmed: searchedBookings.filter((booking) => booking.status === 'confirmed').length,
     pending: searchedBookings.filter((booking) => booking.status === 'pending').length,
+    received: searchedBookings.filter((booking) => booking.status === 'received').length,
     cancelled: searchedBookings.filter((booking) => booking.status === 'cancelled').length,
   };
 
@@ -86,6 +87,8 @@ export default function BookingsPage() {
     switch (status) {
       case 'confirmed':
         return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/35';
+      case 'received':
+        return 'bg-sky-500/20 text-sky-300 border-sky-500/35';
       case 'pending':
         return 'bg-amber-500/20 text-amber-300 border-amber-500/35';
       case 'cancelled':
@@ -187,7 +190,7 @@ export default function BookingsPage() {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6"
+              className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6"
             >
               <div className="rounded-xl border border-dark-border bg-dark/70 backdrop-blur p-4">
                 <p className="text-gray-400 text-xs tracking-wider uppercase mb-1">Found</p>
@@ -200,6 +203,10 @@ export default function BookingsPage() {
               <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
                 <p className="text-amber-300 text-xs tracking-wider uppercase mb-1">Pending</p>
                 <p className="text-white text-2xl font-semibold">{insights.pending}</p>
+              </div>
+              <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 p-4">
+                <p className="text-sky-300 text-xs tracking-wider uppercase mb-1">Received</p>
+                <p className="text-white text-2xl font-semibold">{insights.received}</p>
               </div>
               <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4">
                 <p className="text-rose-300 text-xs tracking-wider uppercase mb-1">Cancelled</p>
@@ -292,13 +299,14 @@ export default function BookingsPage() {
                       )}`}
                     >
                       {booking.status === 'confirmed' && <BadgeCheck size={14} />}
+                      {booking.status === 'received' && <BadgeCheck size={14} />}
                       {booking.status === 'pending' && <CircleDashed size={14} />}
                       {booking.status === 'cancelled' && <Ban size={14} />}
                       {booking.status}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 text-lg mb-5">
+                  <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 text-lg mb-5">
                     <div>
                       <span className="text-gray-400 block text-base mb-1">Check-in</span>
                       <span className="text-white inline-flex items-center gap-1.5">
@@ -328,10 +336,21 @@ export default function BookingsPage() {
                       <span className="text-gray-400 block text-base mb-1">Total</span>
                       <span className="text-gold font-semibold text-xl">{formatCurrency(booking.totalPrice)}</span>
                     </div>
+                    <div>
+                      <span className="text-gray-400 block text-base mb-1">Payment</span>
+                      <span className="text-white">
+                        {booking.paymentMethod === 'cash_on_arrival' ? 'Cash on arrival' : booking.paymentMethod} · {booking.paymentStatus}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-dark-border pt-4">
                     <div className="space-y-1 text-base sm:text-lg text-gray-400">
+                      {booking.receivedAt && (
+                        <p>
+                          Received on {new Date(booking.receivedAt).toLocaleDateString()}
+                        </p>
+                      )}
                       {booking.guestEmail && (
                         <p className="inline-flex items-center gap-2 mr-4">
                           <Mail size={14} className="text-gold" />

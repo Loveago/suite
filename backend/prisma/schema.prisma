@@ -43,6 +43,9 @@ model Booking {
   guestPhone String?
   guests     Int      @default(1)
   status     String   @default("pending")
+  paymentMethod String @default("cash_on_arrival")
+  paymentStatus String @default("pending")
+  receivedAt  DateTime?
   createdAt  DateTime @default(now())
 }
 

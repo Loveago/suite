@@ -3,7 +3,7 @@ const prisma = new PrismaClient();
 
 const createBooking = async (req, res) => {
   try {
-    const { roomId, roomCategory, checkIn, checkOut, guestName, guestEmail, guestPhone, guests } = req.body;
+    const { roomId, roomCategory, checkIn, checkOut, guestName, guestEmail, guestPhone, guests, paymentMethod } = req.body;
 
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
@@ -58,6 +58,7 @@ const createBooking = async (req, res) => {
 
     const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
     const totalPrice = nights * room.price;
+    const selectedPaymentMethod = paymentMethod || 'cash_on_arrival';
 
     const booking = await prisma.booking.create({
       data: {
@@ -69,7 +70,9 @@ const createBooking = async (req, res) => {
         guestEmail: guestEmail || null,
         guestPhone: guestPhone || null,
         guests: guests || 1,
-        status: 'confirmed',
+        status: 'pending',
+        paymentMethod: selectedPaymentMethod,
+        paymentStatus: selectedPaymentMethod === 'cash_on_arrival' ? 'pending' : 'unpaid',
       },
       include: { room: true },
     });
@@ -94,10 +97,30 @@ const getAllBookings = async (req, res) => {
 
 const updateBooking = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, paymentStatus, paymentMethod } = req.body;
+    const updateData = {};
+
+    if (status) {
+      updateData.status = status;
+      if (status === 'received') {
+        updateData.receivedAt = new Date();
+        if (!paymentStatus) {
+          updateData.paymentStatus = 'paid';
+        }
+      }
+    }
+
+    if (paymentStatus) {
+      updateData.paymentStatus = paymentStatus;
+    }
+
+    if (paymentMethod) {
+      updateData.paymentMethod = paymentMethod;
+    }
+
     const booking = await prisma.booking.update({
       where: { id: req.params.id },
-      data: { status },
+      data: updateData,
       include: { room: true },
     });
     res.json(booking);

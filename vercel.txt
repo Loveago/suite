@@ -1,0 +1,221 @@
+THE SUIT DEPLOYMENT GUIDE
+
+THIS FILE EXPLAINS HOW TO DEPLOY:
+- frontend to Vercel
+- backend to Render
+- admin login setup
+- seed data setup
+
+==================================================
+PART 1 - BEFORE YOU START
+==================================================
+
+1. Make sure your code is pushed to GitHub.
+
+2. Make sure you have:
+   - a Vercel account
+   - a Render account
+   - a PostgreSQL database URL
+
+3. This project has 2 apps:
+   - frontend = Next.js app inside the frontend folder
+   - backend = Express + Prisma app inside the backend folder
+
+==================================================
+PART 2 - DEPLOY THE BACKEND TO RENDER FIRST
+==================================================
+
+You should deploy the backend first, because the frontend needs the backend URL.
+
+STEP 1
+Go to https://render.com and sign in.
+
+STEP 2
+Click New, then click Web Service.
+
+STEP 3
+Connect your GitHub repository.
+
+STEP 4
+When Render asks for settings, use these values:
+
+- Name: the-suit-backend
+- Root Directory: backend
+- Runtime: Node
+- Build Command: npm install && npx prisma generate && npx prisma db push
+- Start Command: npm run seed && npm start
+
+STEP 5
+Add these environment variables in Render:
+
+- DATABASE_URL = your PostgreSQL connection string
+- PORT = 10000
+
+STEP 6
+Click Deploy Web Service.
+
+STEP 7
+Wait for deployment to finish.
+
+STEP 8
+After deploy is done, test this in your browser:
+
+https://YOUR-RENDER-URL.onrender.com/api/health
+
+If it works, you should see a JSON response saying the API is running.
+
+==================================================
+PART 3 - OPTIONAL BUT IMPORTANT: SEED THE DATABASE
+==================================================
+
+This project has a seed script in backend/seed.js.
+
+What the seed script does:
+- deletes existing bookings
+- deletes existing rooms
+- deletes existing properties
+- creates 1 property
+- creates the sample rooms
+
+IMPORTANT:
+Running the seed will remove existing booking and room data first.
+So only run it if you are okay with replacing current data.
+
+Because your Render start command now includes the seed command, every fresh start or restart can reset the live data before the server starts.
+Use this only if that is exactly what you want.
+
+If you want sample data on your live database, run this from the backend service environment:
+
+npm run seed
+
+If your database already has real data, do NOT run the seed.
+
+==================================================
+PART 4 - DEPLOY THE FRONTEND TO VERCEL
+==================================================
+
+STEP 1
+Go to https://vercel.com and sign in.
+
+STEP 2
+Click Add New, then click Project.
+
+STEP 3
+Import the same GitHub repository.
+
+STEP 4
+When Vercel asks for settings, use these values:
+
+- Root Directory: frontend
+- Framework Preset: Next.js
+- Install Command: npm install
+- Build Command: npm run build
+
+STEP 5
+Add this environment variable in Vercel:
+
+- NEXT_PUBLIC_API_URL = https://YOUR-RENDER-URL.onrender.com/api
+
+STEP 6
+Click Deploy.
+
+==================================================
+PART 5 - ADMIN LOGIN SETUP
+==================================================
+
+The admin login is handled by the frontend app on Vercel.
+It is NOT created by the backend seed script.
+
+Admin login page:
+- /admincp
+
+Protected admin dashboard:
+- /admin
+
+Add these environment variables in Vercel for admin access:
+
+- ADMIN_EMAIL = your admin email
+- ADMIN_PASSWORD = your admin password
+- ADMIN_SESSION_SECRET = a long random secret string
+
+Example:
+
+- ADMIN_EMAIL = admin@thesuite.com
+- ADMIN_PASSWORD = SuiteAdmin123!
+- ADMIN_SESSION_SECRET = change-this-to-a-long-random-secret
+
+IMPORTANT:
+- change the default password before production use
+- use a strong secret for ADMIN_SESSION_SECRET
+- after changing these values in Vercel, redeploy the frontend
+
+How to log in:
+1. Open your deployed frontend URL
+2. Go to /admincp
+3. Enter the ADMIN_EMAIL and ADMIN_PASSWORD you set in Vercel
+4. After login, you will be redirected to /admin
+
+==================================================
+PART 6 - CONNECT FRONTEND TO BACKEND
+==================================================
+
+After your backend is live on Render:
+
+1. Copy the Render backend URL
+2. Go to Vercel project settings
+3. Add or update:
+
+- NEXT_PUBLIC_API_URL = https://YOUR-RENDER-URL.onrender.com/api
+
+4. Redeploy the frontend
+
+==================================================
+PART 7 - FINAL TEST CHECKLIST
+==================================================
+
+Open the live frontend and test these pages:
+
+1. Home page loads
+2. Rooms page loads
+3. Booking page can create a booking
+4. My bookings page can search bookings
+5. /admincp login works
+6. /admin opens after login
+7. Admin can see rooms
+8. Admin can see bookings
+9. Admin can mark a booking as received
+10. Backend health route works
+
+==================================================
+PART 8 - IMPORTANT NOTES
+==================================================
+
+- If you change the Prisma schema later, Render must run npx prisma db push again.
+- Uploaded files stored on Render are not permanent and can disappear after redeploy.
+- For permanent image/file uploads later, use a storage service like Cloudinary, S3, or Supabase Storage.
+- If the frontend cannot load data, first check NEXT_PUBLIC_API_URL.
+- If admin login fails, first check ADMIN_EMAIL, ADMIN_PASSWORD, and ADMIN_SESSION_SECRET in Vercel.
+
+==================================================
+QUICK COPY SETTINGS
+==================================================
+
+RENDER
+- Root Directory: backend
+- Build Command: npm install && npx prisma generate && npx prisma db push
+- Start Command: npm run seed && npm start
+- Env Vars:
+  - DATABASE_URL
+  - PORT=10000
+
+VERCEL
+- Root Directory: frontend
+- Framework: Next.js
+- Install Command: npm install
+- Build Command: npm run build
+- Env Vars:
+  - NEXT_PUBLIC_API_URL
+  - ADMIN_EMAIL
+  - ADMIN_PASSWORD
+  - ADMIN_SESSION_SECRET
+

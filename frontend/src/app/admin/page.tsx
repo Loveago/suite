@@ -173,7 +173,10 @@ export default function AdminPage() {
 
   const handleUpdateBookingStatus = async (id: string, status: string) => {
     try {
-      await api.bookings.update(id, { status });
+      await api.bookings.update(id, {
+        status,
+        ...(status === 'received' ? { paymentStatus: 'paid' } : {}),
+      });
       loadData();
     } catch {
       alert('Failed to update booking');
@@ -224,6 +227,8 @@ export default function AdminPage() {
     switch (status) {
       case 'confirmed':
         return 'bg-green-500/20 text-green-400';
+      case 'received':
+        return 'bg-blue-500/20 text-blue-300';
       case 'pending':
         return 'bg-yellow-500/20 text-yellow-400';
       case 'cancelled':
@@ -237,7 +242,7 @@ export default function AdminPage() {
     totalRooms: rooms.length,
     totalBookings: bookings.length,
     revenue: bookings
-      .filter((booking) => booking.status === 'confirmed')
+      .filter((booking) => booking.paymentStatus === 'paid')
       .reduce((sum, booking) => sum + booking.totalPrice, 0),
   };
 
@@ -562,6 +567,9 @@ export default function AdminPage() {
                           <p className="text-gray-400 text-sm">
                             {booking.guestName || 'Guest'} — {booking.guestEmail || 'N/A'}
                           </p>
+                          <p className="text-gray-500 text-xs mt-1">
+                            Payment: {booking.paymentMethod === 'cash_on_arrival' ? 'Cash on arrival' : booking.paymentMethod} · {booking.paymentStatus}
+                          </p>
                         </div>
                         <div className="flex items-center gap-2">
                           <span
@@ -578,11 +586,12 @@ export default function AdminPage() {
                           >
                             <option value="pending">Pending</option>
                             <option value="confirmed">Confirmed</option>
+                            <option value="received">Received</option>
                             <option value="cancelled">Cancelled</option>
                           </select>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
+                      <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 text-sm">
                         <div>
                           <span className="text-gray-500 text-xs block">Check-in</span>
                           <span className="text-white">{new Date(booking.checkIn).toLocaleDateString()}</span>
@@ -603,6 +612,12 @@ export default function AdminPage() {
                           <span className="text-gray-500 text-xs block">Booked</span>
                           <span className="text-white">
                             {new Date(booking.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 text-xs block">Received</span>
+                          <span className="text-white">
+                            {booking.receivedAt ? new Date(booking.receivedAt).toLocaleDateString() : 'Not yet'}
                           </span>
                         </div>
                       </div>
