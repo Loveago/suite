@@ -2,11 +2,11 @@
 
 import { motion } from 'framer-motion';
 import { ShieldCheck, Lock, Mail } from 'lucide-react';
-import { FormEvent, useState } from 'react';
+import { FormEvent, Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PageTransition from '@/components/PageTransition';
 
-export default function AdminLoginPage() {
+function AdminLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -124,5 +124,13 @@ export default function AdminLoginPage() {
         </div>
       </div>
     </PageTransition>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminLoginContent />
+    </Suspense>
   );
 }
