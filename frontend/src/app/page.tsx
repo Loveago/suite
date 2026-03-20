@@ -17,7 +17,7 @@ import {
   Star,
 } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
-import { api, Room, getImageUrl } from '@/lib/api';
+import { api, Room, formatCurrency, getImageUrl } from '@/lib/api';
 import { useBookingStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
 
@@ -312,7 +312,7 @@ export default function Home() {
                     <div className="p-5">
                       <h3 className="text-lg font-semibold text-white mb-1">{room.name}</h3>
                       <p className="text-gold text-sm mb-4">
-                        From ${room.price} / Night
+                        From {formatCurrency(room.price)} / Night
                       </p>
                       <motion.div
                         whileHover={{ scale: 1.05 }}
