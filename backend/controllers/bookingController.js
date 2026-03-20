@@ -50,6 +50,9 @@ const createBooking = async (req, res) => {
     if (roomId) {
       room = await prisma.room.findUnique({ where: { id: roomId } });
       if (!room) return res.status(404).json({ error: 'Room not found' });
+      if (room.isActive === false) {
+        return res.status(409).json({ error: 'Selected room is no longer available' });
+      }
       if (room.isBooked) {
         return res.status(409).json({ error: 'Selected room is currently marked as booked' });
       }
@@ -60,6 +63,7 @@ const createBooking = async (req, res) => {
       const availableRooms = await prisma.room.findMany({
         where: {
           category: roomCategory,
+          isActive: true,
           isBooked: false,
           id: { notIn: unavailableRoomIds },
         },
@@ -87,12 +91,14 @@ const createBooking = async (req, res) => {
         guestEmail: guestEmail || null,
         guestPhone: guestPhone || null,
         guests: guests || 1,
-        status: 'pending',
+        status: 'confirmed',
         paymentMethod: selectedPaymentMethod,
         paymentStatus: selectedPaymentMethod === 'cash_on_arrival' ? 'pending' : 'unpaid',
       },
       include: { room: true },
     });
+
+    await syncRoomBookedStatus(room.id);
 
     res.status(201).json(booking);
   } catch (error) {
