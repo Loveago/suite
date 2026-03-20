@@ -24,6 +24,8 @@ model Room {
   price       Float
   images      String[]
   isBooked    Boolean   @default(false)
+  isActive    Boolean   @default(true)
+  archivedAt  DateTime?
   propertyId  String
   property    Property  @relation(fields: [propertyId], references: [id])
   bookings    Booking[]
@@ -54,5 +56,7 @@ model GalleryImage {
   url       String
   caption   String?
   order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  archivedAt DateTime?
   createdAt DateTime @default(now())
 }

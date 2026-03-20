@@ -3,7 +3,9 @@ const prisma = new PrismaClient();
 
 const getAllRooms = async (req, res) => {
   try {
+    const includeArchived = req.query.includeArchived === 'true';
     const rooms = await prisma.room.findMany({
+      where: includeArchived ? undefined : { isActive: true },
       include: { property: true },
       orderBy: [{ category: 'asc' }, { roomNumber: 'asc' }],
     });
@@ -19,7 +21,7 @@ const getRoomById = async (req, res) => {
       where: { id: req.params.id },
       include: { property: true, bookings: true },
     });
-    if (!room) return res.status(404).json({ error: 'Room not found' });
+    if (!room || room.isActive === false) return res.status(404).json({ error: 'Room not found' });
     res.json(room);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch room' });
@@ -38,6 +40,8 @@ const createRoom = async (req, res) => {
         price: parseFloat(price),
         images: images || [],
         isBooked: Boolean(isBooked),
+        isActive: true,
+        archivedAt: null,
         propertyId,
       },
     });
@@ -71,9 +75,15 @@ const updateRoom = async (req, res) => {
 
 const deleteRoom = async (req, res) => {
   try {
-    await prisma.booking.deleteMany({ where: { roomId: req.params.id } });
-    await prisma.room.delete({ where: { id: req.params.id } });
-    res.json({ message: 'Room deleted successfully' });
+    const archivedRoom = await prisma.room.update({
+      where: { id: req.params.id },
+      data: {
+        isActive: false,
+        archivedAt: new Date(),
+        isBooked: false,
+      },
+    });
+    res.json({ message: 'Room archived successfully', room: archivedRoom });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete room', details: error.message });
   }

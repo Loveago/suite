@@ -14,7 +14,7 @@ const roomBackdropImages = [
   'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?auto=format&fit=crop&w=2000&q=80',
 ];
 
-const statusFilters = ['all', 'confirmed', 'pending', 'received', 'cancelled'] as const;
+const statusFilters = ['all', 'confirmed', 'pending', 'received', 'checked_out', 'cancelled'] as const;
 type StatusFilter = (typeof statusFilters)[number];
 
 export default function BookingsPage() {
@@ -80,6 +80,7 @@ export default function BookingsPage() {
     confirmed: searchedBookings.filter((booking) => booking.status === 'confirmed').length,
     pending: searchedBookings.filter((booking) => booking.status === 'pending').length,
     received: searchedBookings.filter((booking) => booking.status === 'received').length,
+    checkedOut: searchedBookings.filter((booking) => booking.status === 'checked_out').length,
     cancelled: searchedBookings.filter((booking) => booking.status === 'cancelled').length,
   };
 
@@ -89,6 +90,8 @@ export default function BookingsPage() {
         return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/35';
       case 'received':
         return 'bg-sky-500/20 text-sky-300 border-sky-500/35';
+      case 'checked_out':
+        return 'bg-purple-500/20 text-purple-300 border-purple-500/35';
       case 'pending':
         return 'bg-amber-500/20 text-amber-300 border-amber-500/35';
       case 'cancelled':
@@ -190,7 +193,7 @@ export default function BookingsPage() {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6"
+              className="grid grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4 mb-6"
             >
               <div className="rounded-xl border border-dark-border bg-dark/70 backdrop-blur p-4">
                 <p className="text-gray-400 text-xs tracking-wider uppercase mb-1">Found</p>
@@ -207,6 +210,10 @@ export default function BookingsPage() {
               <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 p-4">
                 <p className="text-sky-300 text-xs tracking-wider uppercase mb-1">Received</p>
                 <p className="text-white text-2xl font-semibold">{insights.received}</p>
+              </div>
+              <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-4">
+                <p className="text-purple-300 text-xs tracking-wider uppercase mb-1">Checked Out</p>
+                <p className="text-white text-2xl font-semibold">{insights.checkedOut}</p>
               </div>
               <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4">
                 <p className="text-rose-300 text-xs tracking-wider uppercase mb-1">Cancelled</p>
@@ -300,6 +307,7 @@ export default function BookingsPage() {
                     >
                       {booking.status === 'confirmed' && <BadgeCheck size={14} />}
                       {booking.status === 'received' && <BadgeCheck size={14} />}
+                      {booking.status === 'checked_out' && <BadgeCheck size={14} />}
                       {booking.status === 'pending' && <CircleDashed size={14} />}
                       {booking.status === 'cancelled' && <Ban size={14} />}
                       {booking.status}

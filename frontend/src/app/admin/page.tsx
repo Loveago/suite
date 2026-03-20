@@ -229,6 +229,8 @@ export default function AdminPage() {
         return 'bg-green-500/20 text-green-400';
       case 'received':
         return 'bg-blue-500/20 text-blue-300';
+      case 'checked_out':
+        return 'bg-purple-500/20 text-purple-300';
       case 'pending':
         return 'bg-yellow-500/20 text-yellow-400';
       case 'cancelled':
@@ -587,6 +589,7 @@ export default function AdminPage() {
                             <option value="pending">Pending</option>
                             <option value="confirmed">Confirmed</option>
                             <option value="received">Received</option>
+                            <option value="checked_out">Checked Out</option>
                             <option value="cancelled">Cancelled</option>
                           </select>
                         </div>

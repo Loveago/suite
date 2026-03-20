@@ -1,6 +1,23 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+const ACTIVE_BOOKING_STATUSES = ['confirmed', 'received'];
+
+const syncRoomBookedStatus = async (roomId) => {
+  const activeBooking = await prisma.booking.findFirst({
+    where: {
+      roomId,
+      status: { in: ACTIVE_BOOKING_STATUSES },
+    },
+    select: { id: true },
+  });
+
+  await prisma.room.update({
+    where: { id: roomId },
+    data: { isBooked: Boolean(activeBooking) },
+  });
+};
+
 const createBooking = async (req, res) => {
   try {
     const { roomId, roomCategory, checkIn, checkOut, guestName, guestEmail, guestPhone, guests, paymentMethod } = req.body;
@@ -18,7 +35,7 @@ const createBooking = async (req, res) => {
 
     const overlappingRoomIds = await prisma.booking.findMany({
       where: {
-        status: { not: 'cancelled' },
+        status: { in: ACTIVE_BOOKING_STATUSES },
         OR: [
           { checkIn: { lt: checkOutDate }, checkOut: { gt: checkInDate } },
         ],
@@ -98,15 +115,45 @@ const getAllBookings = async (req, res) => {
 const updateBooking = async (req, res) => {
   try {
     const { status, paymentStatus, paymentMethod } = req.body;
+    const existingBooking = await prisma.booking.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, roomId: true, checkIn: true, checkOut: true, status: true, receivedAt: true },
+    });
+
+    if (!existingBooking) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
     const updateData = {};
 
     if (status) {
+      if (ACTIVE_BOOKING_STATUSES.includes(status)) {
+        const conflictingBooking = await prisma.booking.findFirst({
+          where: {
+            id: { not: existingBooking.id },
+            roomId: existingBooking.roomId,
+            status: { in: ACTIVE_BOOKING_STATUSES },
+            checkIn: { lt: existingBooking.checkOut },
+            checkOut: { gt: existingBooking.checkIn },
+          },
+          select: { id: true },
+        });
+
+        if (conflictingBooking) {
+          return res.status(409).json({ error: 'This room already has a confirmed booking for the selected dates' });
+        }
+      }
+
       updateData.status = status;
       if (status === 'received') {
         updateData.receivedAt = new Date();
         if (!paymentStatus) {
           updateData.paymentStatus = 'paid';
         }
+      }
+
+      if (status === 'checked_out') {
+        updateData.receivedAt = updateData.receivedAt || existingBooking.receivedAt || null;
       }
     }
 
@@ -123,6 +170,11 @@ const updateBooking = async (req, res) => {
       data: updateData,
       include: { room: true },
     });
+
+    if (status && (ACTIVE_BOOKING_STATUSES.includes(status) || ACTIVE_BOOKING_STATUSES.includes(existingBooking.status) || status === 'cancelled' || status === 'checked_out')) {
+      await syncRoomBookedStatus(existingBooking.roomId);
+    }
+
     res.json(booking);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update booking', details: error.message });

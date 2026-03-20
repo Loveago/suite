@@ -2,18 +2,26 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-  // Clean existing data
-  await prisma.booking.deleteMany();
-  await prisma.room.deleteMany();
-  await prisma.property.deleteMany();
+  const propertyName = 'THE SUITE';
+  const propertyDescription = 'A luxury boutique property offering premium rooms with world-class amenities.';
 
-  // Create the property
-  const property = await prisma.property.create({
-    data: {
-      name: 'THE SUITE',
-      description: 'A luxury boutique property offering premium rooms with world-class amenities.',
-    },
+  let property = await prisma.property.findFirst({
+    where: { name: propertyName },
   });
+
+  if (property) {
+    property = await prisma.property.update({
+      where: { id: property.id },
+      data: { description: propertyDescription },
+    });
+  } else {
+    property = await prisma.property.create({
+      data: {
+        name: propertyName,
+        description: propertyDescription,
+      },
+    });
+  }
 
   const categoryImages = {
     Small: [
@@ -76,16 +84,22 @@ async function main() {
     description: categoryDescriptions[room.category],
     price: room.price,
     images: categoryImages[room.category],
+    isActive: true,
+    archivedAt: null,
     propertyId: property.id,
   }));
 
   for (const room of rooms) {
-    await prisma.room.create({ data: room });
+    await prisma.room.upsert({
+      where: { roomNumber: room.roomNumber },
+      update: room,
+      create: room,
+    });
   }
 
   console.log('Seed completed successfully!');
   console.log(`Created property: ${property.name}`);
-  console.log(`Created ${rooms.length} rooms`);
+  console.log(`Upserted ${rooms.length} rooms without deleting existing records`);
 }
 
 main()
