@@ -136,3 +136,20 @@ body > main h2 {
 .page-transition-wrapper {
   min-height: 100vh;
 }
+
+@keyframes luxurySupportPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 16px 38px rgba(201, 166, 70, 0.18);
+  }
+
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 20px 44px rgba(201, 166, 70, 0.26);
+  }
+}
+
+.luxury-support-pulse {
+  animation: luxurySupportPulse 2.8s ease-in-out infinite;
+}
