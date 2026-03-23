@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+const { sendBookingConfirmationEmail } = require('../services/bookingEmailService');
 const prisma = new PrismaClient();
 
 const ACTIVE_BOOKING_STATUSES = ['confirmed', 'received'];
@@ -99,6 +100,12 @@ const createBooking = async (req, res) => {
     });
 
     await syncRoomBookedStatus(room.id);
+
+    try {
+      await sendBookingConfirmationEmail(booking);
+    } catch (emailError) {
+      console.error('Failed to send booking confirmation email:', emailError.message);
+    }
 
     res.status(201).json(booking);
   } catch (error) {
