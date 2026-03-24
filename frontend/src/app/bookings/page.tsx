@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { Search, CalendarDays, Users, BadgeCheck, CircleDashed, Ban, Copy, Mail, Phone } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
+import PriceWithUsd from '@/components/PriceWithUsd';
 import { api, Booking, formatCurrency } from '@/lib/api';
 
 const roomBackdropImages = [
@@ -342,7 +343,7 @@ export default function BookingsPage() {
                     </div>
                     <div>
                       <span className="text-gray-400 block text-base mb-1">Total</span>
-                      <span className="text-gold font-semibold text-xl">{formatCurrency(booking.totalPrice)}</span>
+                      <PriceWithUsd amount={booking.totalPrice} className="text-gold font-semibold text-xl" usdClassName="text-gold/80 text-sm font-medium" />
                     </div>
                     <div>
                       <span className="text-gray-400 block text-base mb-1">Payment</span>

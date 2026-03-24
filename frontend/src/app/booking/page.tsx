@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { CheckCircle, ArrowLeft, ArrowRight, Calendar, User, CreditCard } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
+import PriceWithUsd from '@/components/PriceWithUsd';
 import { useBookingStore } from '@/lib/store';
 import { api, formatCurrency } from '@/lib/api';
 
@@ -89,11 +90,14 @@ export default function BookingPage() {
           <h1 className="text-3xl sm:text-4xl font-light text-gold font-serif italic text-center mb-2">
             {bookingComplete ? 'Booking Confirmed!' : 'Complete Your Booking'}
           </h1>
-          <p className="text-gray-400 text-center text-sm mb-10">
-            {bookingComplete
-              ? 'Your reservation has been confirmed.'
-              : `Booking: ${store.roomName} — ${formatCurrency(store.roomPrice || 0)}/night`}
-          </p>
+          {bookingComplete ? (
+            <p className="text-gray-400 text-center text-sm mb-10">Your reservation has been confirmed.</p>
+          ) : (
+            <div className="text-center text-sm text-gray-400 mb-10">
+              <span>{`Booking: ${store.roomName} — `}</span>
+              <PriceWithUsd amount={store.roomPrice || 0} className="text-gray-300" usdClassName="text-gold/80" suffix="/night" />
+            </div>
+          )}
         </motion.div>
 
         {/* Success State */}
@@ -137,7 +141,7 @@ export default function BookingPage() {
               </div>
               <div className="flex justify-between text-sm font-semibold pt-2 border-t border-dark-border">
                 <span className="text-white">Total</span>
-                <span className="text-gold">{formatCurrency(store.getTotalPrice())}</span>
+                <PriceWithUsd amount={store.getTotalPrice()} className="text-gold" usdClassName="text-gold/80" />
               </div>
             </div>
             <motion.button
@@ -244,11 +248,11 @@ export default function BookingPage() {
                         <span className="text-gray-400">
                           {formatCurrency(store.roomPrice || 0)} x {store.getNights()} night{store.getNights() > 1 ? 's' : ''}
                         </span>
-                        <span className="text-white">{formatCurrency(store.getTotalPrice())}</span>
+                        <PriceWithUsd amount={store.getTotalPrice()} className="text-white" usdClassName="text-gray-400" />
                       </div>
                       <div className="flex justify-between text-lg font-semibold pt-2 border-t border-dark-border">
                         <span className="text-white">Total</span>
-                        <span className="text-gold">{formatCurrency(store.getTotalPrice())}</span>
+                        <PriceWithUsd amount={store.getTotalPrice()} className="text-gold" usdClassName="text-gold/80" />
                       </div>
                     </motion.div>
                   )}

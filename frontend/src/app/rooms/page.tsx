@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { SlidersHorizontal, X } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
+import PriceWithUsd from '@/components/PriceWithUsd';
 import { api, Room, formatCurrency, getImageUrl } from '@/lib/api';
 import { defaultRooms, roomCategoryOrder } from '@/lib/default-room-catalog';
 
@@ -226,7 +227,7 @@ export default function RoomsPage() {
                                   Room {room.roomNumber}
                                 </div>
                                 <div className="absolute top-3 right-3 bg-gold text-dark text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
-                                  {formatCurrency(room.price)}/night
+                                  <PriceWithUsd amount={room.price} suffix="/night" />
                                 </div>
                                 <div
                                   className={`absolute bottom-3 left-3 text-xs font-semibold px-3 py-1.5 rounded-full border ${

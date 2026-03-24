@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { Calendar, User, Check, BedDouble, ChevronRight, ChevronLeft, Sparkles } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
+import PriceWithUsd from '@/components/PriceWithUsd';
 import { api, Room, formatCurrency } from '@/lib/api';
 import { defaultRooms, roomCategoryOrder } from '@/lib/default-room-catalog';
 import { useRouter } from 'next/navigation';
@@ -294,7 +295,8 @@ export default function BookNowPage() {
                         className="text-center py-2 text-gold/80 text-sm font-medium"
                       >
                         {nights} night{nights !== 1 ? 's' : ''}
-                        {selectedCategory ? ` · ${formatCurrency(totalAmount)} total` : ''}
+                        {selectedCategory ? ' · ' : ''}
+                        {selectedCategory ? <PriceWithUsd amount={totalAmount} className="text-gold/80" usdClassName="text-gold/60" suffix=" total" /> : null}
                       </motion.div>
                     )}
 
@@ -399,7 +401,7 @@ export default function BookNowPage() {
 
                     <div className="rounded-xl bg-gold/8 border border-gold/25 p-4 flex items-center justify-between mb-6">
                       <span className="text-gray-300 font-medium">Total Amount</span>
-                      <span className="text-gold text-2xl font-bold">{formatCurrency(totalAmount)}</span>
+                      <PriceWithUsd amount={totalAmount} className="text-gold text-2xl font-bold" usdClassName="text-gold/80 text-base font-medium" />
                     </div>
 
                     <p className="text-gray-500 text-xs text-center mb-5">

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, X, Maximize2 } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
+import PriceWithUsd from '@/components/PriceWithUsd';
 import { api, Room, formatCurrency, getImageUrl } from '@/lib/api';
 import { defaultRooms } from '@/lib/default-room-catalog';
 import { useBookingStore } from '@/lib/store';
@@ -316,10 +317,12 @@ export default function RoomDetailPage() {
             <h1 className="text-3xl sm:text-4xl font-light text-gold font-serif italic mb-2">
               {room.name}
             </h1>
-            <p className="text-2xl text-white font-semibold mb-6">
-              {formatCurrency(room.price)}{' '}
-              <span className="text-gray-400 text-base font-normal">/ night</span>
-            </p>
+            <PriceWithUsd
+              amount={room.price}
+              className="mb-6 block text-2xl font-semibold text-white"
+              usdClassName="text-lg font-medium text-gold/80"
+              suffix=" / night"
+            />
 
             <div
               className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border mb-6 ${
@@ -421,11 +424,11 @@ export default function RoomDetailPage() {
                       <span className="text-gray-400">
                         {formatCurrency(room.price)} x {getNights()} night{getNights() > 1 ? 's' : ''}
                       </span>
-                      <span className="text-white">{formatCurrency(room.price * getNights())}</span>
+                      <PriceWithUsd amount={room.price * getNights()} className="text-white" usdClassName="text-gray-400" />
                     </div>
                     <div className="flex justify-between text-lg font-semibold pt-2 border-t border-dark-border">
                       <span className="text-white">Total</span>
-                      <span className="text-gold">{formatCurrency(room.price * getNights())}</span>
+                      <PriceWithUsd amount={room.price * getNights()} className="text-gold" usdClassName="text-gold/80" />
                     </div>
                   </motion.div>
                 )}
@@ -458,10 +461,7 @@ export default function RoomDetailPage() {
       >
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div>
-            <p className="text-white font-semibold text-lg">
-              {formatCurrency(room.price)}
-              <span className="text-gray-400 text-sm font-normal"> / night</span>
-            </p>
+            <PriceWithUsd amount={room.price} className="text-lg font-semibold text-white" usdClassName="text-sm text-gold/80" suffix=" / night" />
             {getNights() > 0 && (
               <p className="text-gold text-xs">
                 {getNights()} night{getNights() > 1 ? 's' : ''} — {formatCurrency(room.price * getNights())} total
