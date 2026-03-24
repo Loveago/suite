@@ -3,6 +3,11 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
+const companyPhone = '050 791 3323';
+const companyEmail = 'thesuite2026@gmail.com';
+const companyAddress = 'Clementine street Tema community 20';
+const whatsappNumber = '233507913323';
+
 export default function Footer() {
   return (
     <footer className="bg-dark-lighter border-t border-dark-border mt-auto w-full">
@@ -52,9 +57,27 @@ export default function Footer() {
               CONTACT
             </h4>
             <div className="space-y-2 text-gray-400 text-sm">
-              <p>123 Luxury Avenue</p>
-              <p>contact@thesuite.com</p>
-              <p>+1 (555) 000-0000</p>
+              <p>{companyAddress}</p>
+              <a
+                href={`mailto:${companyEmail}`}
+                className="block transition-colors duration-300 hover:text-gold"
+              >
+                {companyEmail}
+              </a>
+              <a
+                href={`tel:${companyPhone.replace(/\s+/g, '')}`}
+                className="block transition-colors duration-300 hover:text-gold"
+              >
+                {companyPhone}
+              </a>
+              <a
+                href={`https://wa.me/${whatsappNumber}`}
+                target="_blank"
+                rel="noreferrer"
+                className="block transition-colors duration-300 hover:text-gold"
+              >
+                WhatsApp: {companyPhone}
+              </a>
             </div>
           </div>
         </div>

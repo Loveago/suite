@@ -2,7 +2,7 @@
 
 import { MessageCircleMore } from 'lucide-react';
 
-const whatsappNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '233XXXXXXXXX').replace(/\D/g, '');
+const whatsappNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '233507913323').replace(/\D/g, '');
 const whatsappMessage = process.env.NEXT_PUBLIC_WHATSAPP_MESSAGE || 'Hello THE SUITE, I need help with my booking.';
 
 export default function WhatsAppSupportButton() {

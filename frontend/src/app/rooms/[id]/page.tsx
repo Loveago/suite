@@ -12,6 +12,7 @@ import { useBookingStore } from '@/lib/store';
 const roomItemsByCategory: Record<string, string[]> = {
   Small: [
     'Air conditioning',
+    'Double size bed',
     '1 tea cup',
     '1 saucer',
     '2 bowls',
@@ -40,6 +41,7 @@ const roomItemsByCategory: Record<string, string[]> = {
   ],
   Medium: [
     'Air conditioning',
+    'Double size bed',
     '1 tea cup',
     '1 saucer',
     '1 serving plate',
@@ -71,6 +73,7 @@ const roomItemsByCategory: Record<string, string[]> = {
   ],
   Large: [
     'Air conditioning',
+    'Queen size bed',
     '1 tea cup',
     '1 saucer',
     '1 serving plate',
@@ -99,6 +102,8 @@ const roomItemsByCategory: Record<string, string[]> = {
   ],
   VIP: [
     'Air conditioning',
+    'Queen size bed',
+    'Balcony',
     '1 tea cup',
     '1 saucer',
     '1 serving plate',
