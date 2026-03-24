@@ -9,6 +9,124 @@ import { api, Room, formatCurrency, getImageUrl } from '@/lib/api';
 import { defaultRooms } from '@/lib/default-room-catalog';
 import { useBookingStore } from '@/lib/store';
 
+const roomItemsByCategory: Record<string, string[]> = {
+  Small: [
+    'Air conditioning',
+    '1 tea cup',
+    '1 saucer',
+    '2 bowls',
+    '1 serving plate',
+    '1 medium plate',
+    '1 big cup',
+    '2 old fashioned glasses',
+    '2 wine glasses',
+    '2 champagne glasses',
+    '2 forks',
+    '2 spoons',
+    '2 knives',
+    '2 tea spoons',
+    '1 saucepan',
+    '1 chopping board',
+    '1 napkin',
+    '1 kettle',
+    '1 blender',
+    '1 hotplate',
+    '1 microwave',
+    '1 bedside lamp',
+    'Fridge',
+    '1 corkscrew',
+    'Long handled broom',
+    'Dustpan',
+  ],
+  Medium: [
+    'Air conditioning',
+    '1 tea cup',
+    '1 saucer',
+    '1 serving plate',
+    '2 bowls',
+    '1 medium plate',
+    '1 big cup',
+    '2 beer glasses',
+    '2 old fashioned glasses',
+    '2 wine glasses',
+    '2 champagne glasses',
+    '2 forks',
+    '2 knives',
+    '2 spoons',
+    '2 tea spoons',
+    '1 saucepan',
+    '1 chopping board',
+    '1 napkin',
+    '1 kettle',
+    '1 blender',
+    '1 hotplate',
+    '1 microwave',
+    '1 bedside lamp',
+    'Fridge',
+    '1 corkscrew',
+    'Long handled broom',
+    'Dustpan',
+    'Dining set',
+    'Balcony',
+  ],
+  Large: [
+    'Air conditioning',
+    '1 tea cup',
+    '1 saucer',
+    '1 serving plate',
+    '2 bowls',
+    '1 medium plate',
+    '1 big cup',
+    '2 beer glasses',
+    '2 wine glasses',
+    '2 champagne glasses',
+    '2 forks',
+    '2 knives',
+    '2 spoons',
+    '2 tea spoons',
+    '1 saucepan',
+    '1 chopping board',
+    '1 napkin',
+    '1 kettle',
+    '1 blender',
+    '1 hotplate',
+    '1 microwave',
+    '1 bedside lamp',
+    'Fridge',
+    'Corkscrew',
+    'Long handled broom',
+    'Dustpan',
+  ],
+  VIP: [
+    'Air conditioning',
+    '1 tea cup',
+    '1 saucer',
+    '1 serving plate',
+    '2 bowls',
+    '1 medium plate',
+    '1 big cup',
+    '2 beer glasses',
+    '2 wine glasses',
+    '2 champagne glasses',
+    '2 forks',
+    '2 knives',
+    '2 spoons',
+    '2 tea spoons',
+    '1 saucepan',
+    '1 chopping board',
+    '1 napkin',
+    '1 kettle',
+    '1 blender',
+    '1 hotplate',
+    '1 microwave',
+    '1 bedside lamp',
+    'Fridge',
+    'Corkscrew',
+    'Long handled broom',
+    'Dustpan',
+  ],
+};
+
 export default function RoomDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -77,6 +195,8 @@ export default function RoomDetailPage() {
   }
 
   if (!room) return null;
+
+  const roomItems = roomItemsByCategory[room.category] || ['Air conditioning'];
 
   return (
     <PageTransition>
@@ -212,6 +332,29 @@ export default function RoomDetailPage() {
                   {line}
                 </p>
               ))}
+            </div>
+
+            <div className="mb-8 rounded-2xl border border-dark-border bg-dark-card/70 p-5 sm:p-6">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.24em] text-gold/70">Room details</p>
+                  <h2 className="mt-2 text-xl font-semibold text-white">What’s included in this room</h2>
+                </div>
+                <span className="rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-gold">
+                  {room.category} room
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {roomItems.map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-xl border border-dark-border bg-dark/50 px-4 py-3 text-sm text-gray-200"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Booking Card */}
