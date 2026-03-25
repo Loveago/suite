@@ -10,7 +10,7 @@ datasource db {
 model Property {
   id            String         @id @default(uuid())
   name          String
-  slug          String?        @unique
+  slug          String?
   city          String?
   description   String?
   rooms         Room[]
