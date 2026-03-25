@@ -124,20 +124,39 @@ async function main() {
   const seededProperties = [];
 
   for (const propertySeed of propertiesToSeed) {
-    const property = await prisma.property.upsert({
-      where: { slug: propertySeed.slug },
-      update: {
-        name: propertySeed.name,
-        city: propertySeed.city,
-        description: propertySeed.description,
-      },
-      create: {
-        name: propertySeed.name,
-        slug: propertySeed.slug,
-        city: propertySeed.city,
-        description: propertySeed.description,
+    const existingProperty = await prisma.property.findFirst({
+      where: {
+        OR: [
+          { slug: propertySeed.slug },
+          { name: propertySeed.name },
+          {
+            name:
+              propertySeed.slug === 'the-suite-tema'
+                ? 'THE SUITE'
+                : propertySeed.name,
+          },
+        ],
       },
     });
+
+    const property = existingProperty
+      ? await prisma.property.update({
+          where: { id: existingProperty.id },
+          data: {
+            name: propertySeed.name,
+            slug: propertySeed.slug,
+            city: propertySeed.city,
+            description: propertySeed.description,
+          },
+        })
+      : await prisma.property.create({
+          data: {
+            name: propertySeed.name,
+            slug: propertySeed.slug,
+            city: propertySeed.city,
+            description: propertySeed.description,
+          },
+        });
 
     seededProperties.push(property);
 
