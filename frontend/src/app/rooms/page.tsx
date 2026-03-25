@@ -2,32 +2,43 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { SlidersHorizontal, X } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
 import PriceWithUsd from '@/components/PriceWithUsd';
-import { api, Room, formatCurrency, getImageUrl } from '@/lib/api';
-import { defaultRooms, roomCategoryOrder } from '@/lib/default-room-catalog';
+import { api, Property, Room, formatCurrency, getImageUrl } from '@/lib/api';
+import { defaultProperties, getDefaultRoomsForProperty, roomCategoryOrder } from '@/lib/default-room-catalog';
 
-export default function RoomsPage() {
+function RoomsPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [properties, setProperties] = useState<Property[]>(defaultProperties);
   const [loading, setLoading] = useState(true);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
   const [showFilter, setShowFilter] = useState(false);
   const [sortBy, setSortBy] = useState<'default' | 'price-low' | 'price-high'>('default');
+  const selectedPropertyId = searchParams.get('propertyId') || defaultProperties[0].id;
+
+  useEffect(() => {
+    api.properties.getAll().then((data) => setProperties(data.length > 0 ? data : defaultProperties)).catch(() => setProperties(defaultProperties));
+  }, []);
 
   useEffect(() => {
     api.rooms
-      .getAll()
+      .getAll({ propertyId: selectedPropertyId })
       .then((data) => {
-        setRooms(data.length > 0 ? data : defaultRooms);
+        setRooms(data.length > 0 ? data : getDefaultRoomsForProperty(selectedPropertyId));
         setLoading(false);
       })
       .catch(() => {
-        setRooms(defaultRooms);
+        setRooms(getDefaultRoomsForProperty(selectedPropertyId));
         setLoading(false);
       });
-  }, []);
+  }, [selectedPropertyId]);
+
+  const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || defaultProperties.find((property) => property.id === selectedPropertyId) || defaultProperties[0];
 
   const filteredRooms = rooms
     .filter((room) => room.price >= priceRange[0] && room.price <= priceRange[1])
@@ -43,7 +54,13 @@ export default function RoomsPage() {
       if (img.startsWith('http')) return img;
       return getImageUrl(img);
     }
-    return defaultRooms[0].images[0];
+    return getDefaultRoomsForProperty(selectedPropertyId)[0]?.images[0] || defaultProperties[0].id;
+  };
+
+  const handlePropertyChange = (propertyId: string) => {
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.set('propertyId', propertyId);
+    router.push(`/rooms?${nextParams.toString()}`);
   };
 
   const groupedRooms = roomCategoryOrder
@@ -68,9 +85,25 @@ export default function RoomsPage() {
               Our Rooms
             </h1>
             <p className="text-gray-400 text-sm tracking-wide max-w-lg mx-auto text-center">
-              Explore each room category, room number, and nightly rate across our curated luxury collection.
+              Explore each room category, room number, and nightly rate for {selectedProperty.name} in {selectedProperty.city}.
             </p>
           </motion.div>
+
+          <div className="mb-8 flex flex-wrap justify-center gap-3">
+            {properties.map((property) => (
+              <button
+                key={property.id}
+                onClick={() => handlePropertyChange(property.id)}
+                className={`rounded-full border px-5 py-2.5 text-sm transition-colors ${
+                  property.id === selectedPropertyId
+                    ? 'border-gold bg-gold text-dark'
+                    : 'border-dark-border bg-dark-card text-gray-300 hover:border-gold/40 hover:text-gold'
+                }`}
+              >
+                {property.name} · {property.city}
+              </button>
+            ))}
+          </div>
 
           {/* Filter Bar */}
           <motion.div
@@ -288,5 +321,34 @@ export default function RoomsPage() {
         </div>
       </section>
     </PageTransition>
+  );
+}
+
+export default function RoomsPage() {
+  return (
+    <Suspense
+      fallback={
+        <PageTransition>
+          <section className="relative py-16 sm:py-24 px-4">
+            <div className="max-w-7xl mx-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="bg-dark-card border border-dark-border rounded-xl overflow-hidden">
+                    <div className="h-56 bg-dark-border animate-pulse" />
+                    <div className="p-5 space-y-3">
+                      <div className="h-5 bg-dark-border rounded animate-pulse w-2/3" />
+                      <div className="h-4 bg-dark-border rounded animate-pulse w-1/3" />
+                      <div className="h-8 bg-dark-border rounded animate-pulse w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        </PageTransition>
+      }
+    >
+      <RoomsPageContent />
+    </Suspense>
   );
 }

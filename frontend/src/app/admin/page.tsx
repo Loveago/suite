@@ -17,7 +17,8 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
-import { api, Room, Booking, GalleryImage, formatCurrency, getImageUrl } from '@/lib/api';
+import { api, Room, Booking, GalleryImage, Property, formatCurrency, getImageUrl } from '@/lib/api';
+import { defaultProperties } from '@/lib/default-room-catalog';
 import { useRouter } from 'next/navigation';
 
 type Tab = 'rooms' | 'bookings' | 'gallery';
@@ -48,6 +49,8 @@ export default function AdminPage() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [properties, setProperties] = useState<Property[]>(defaultProperties);
+  const [selectedPropertyId, setSelectedPropertyId] = useState('');
   const [loading, setLoading] = useState(true);
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
@@ -67,7 +70,10 @@ export default function AdminPage() {
   const audioContextRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
-    loadData();
+    api.properties
+      .getAll()
+      .then((data) => setProperties(data.length > 0 ? data : defaultProperties))
+      .catch(() => setProperties(defaultProperties));
   }, []);
 
   useEffect(() => {
@@ -77,12 +83,29 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
+    if (!selectedPropertyId) {
+      setRooms([]);
+      setBookings([]);
+      setGalleryImages([]);
+      setLoading(false);
+      latestBookingIdsRef.current = [];
+      return;
+    }
+
+    loadData();
+  }, [selectedPropertyId]);
+
+  useEffect(() => {
+    if (!selectedPropertyId) {
+      return;
+    }
+
     const interval = window.setInterval(() => {
       loadData({ silent: true });
     }, 30000);
 
     return () => window.clearInterval(interval);
-  }, []);
+  }, [selectedPropertyId]);
 
   useEffect(() => {
     if (tab === 'bookings') {
@@ -162,15 +185,23 @@ export default function AdminPage() {
   };
 
   const loadData = async ({ silent = false }: { silent?: boolean } = {}) => {
+    if (!selectedPropertyId) {
+      setRooms([]);
+      setBookings([]);
+      setGalleryImages([]);
+      setLoading(false);
+      return;
+    }
+
     if (!silent) {
       setLoading(true);
     }
 
     try {
       const [roomsData, bookingsData, galleryData] = await Promise.all([
-        api.rooms.getAll().catch(() => []),
-        api.bookings.getAll().catch(() => []),
-        api.gallery.getAll().catch(() => []),
+        api.rooms.getAll({ propertyId: selectedPropertyId }).catch(() => []),
+        api.bookings.getAll({ propertyId: selectedPropertyId }).catch(() => []),
+        api.gallery.getAll({ propertyId: selectedPropertyId }).catch(() => []),
       ]);
 
       const sortedBookings = [...bookingsData].sort(
@@ -223,7 +254,7 @@ export default function AdminPage() {
 
   const openCreateModal = () => {
     setEditingRoom(null);
-    setRoomForm(emptyRoomForm);
+    setRoomForm({ ...emptyRoomForm, propertyId: selectedPropertyId });
     setShowRoomModal(true);
     setError('');
   };
@@ -259,9 +290,10 @@ export default function AdminPage() {
           description: roomForm.description,
           price: parseFloat(roomForm.price),
           images: roomForm.images,
+          propertyId: roomForm.propertyId || selectedPropertyId,
         });
       } else {
-        const propertyId = roomForm.propertyId || rooms[0]?.propertyId || 'default';
+        const propertyId = roomForm.propertyId || selectedPropertyId || rooms[0]?.propertyId || 'default';
         await api.rooms.create({
           name: roomForm.name,
           category: roomForm.category,
@@ -334,12 +366,13 @@ export default function AdminPage() {
   };
 
   const handleAddGalleryImage = async () => {
-    if (!newGalleryUrl.trim()) return;
+    if (!newGalleryUrl.trim() || !selectedPropertyId) return;
     try {
       await api.gallery.create({
         url: newGalleryUrl,
         caption: newGalleryCaption || undefined,
         order: galleryImages.length,
+        propertyId: selectedPropertyId,
       });
       setNewGalleryUrl('');
       setNewGalleryCaption('');
@@ -401,6 +434,18 @@ export default function AdminPage() {
       rooms: [...groupedRooms[category]].sort((a, b) => a.roomNumber.localeCompare(b.roomNumber, undefined, { numeric: true })),
     }));
   const latestBooking = bookings[0] || null;
+  const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || null;
+
+  const chooseProperty = (propertyId: string) => {
+    latestBookingIdsRef.current = [];
+    setSelectedPropertyId(propertyId);
+    setUnseenBookingCount(0);
+    setNewBookingNotice(null);
+    setExpandedBookings({});
+    setCollapsedCategories({});
+    setTab('rooms');
+    setError('');
+  };
 
   const handleLogout = async () => {
     try {
@@ -425,19 +470,65 @@ export default function AdminPage() {
               <h1 className="text-3xl sm:text-4xl font-light text-gold font-serif italic mb-2">
                 Admin Panel
               </h1>
-              <p className="text-gray-400 text-sm">Manage rooms, bookings, and images</p>
+              <p className="text-gray-400 text-sm">
+                {selectedProperty
+                  ? `Managing ${selectedProperty.name} in ${selectedProperty.city}`
+                  : 'Choose a property to manage rooms, bookings, prices, and gallery separately.'}
+              </p>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={handleLogout}
-              className="inline-flex items-center justify-center gap-2 border border-dark-border bg-dark-card hover:border-gold/40 hover:text-gold text-gray-300 px-4 py-2.5 rounded-xl text-sm transition-colors"
-            >
-              <LogOut size={16} />
-              Logout
-            </motion.button>
+            <div className="flex flex-wrap items-center gap-3">
+              {selectedProperty && (
+                <button
+                  onClick={() => chooseProperty('')}
+                  className="inline-flex items-center justify-center gap-2 border border-dark-border bg-dark-card hover:border-gold/40 hover:text-gold text-gray-300 px-4 py-2.5 rounded-xl text-sm transition-colors"
+                >
+                  Switch Property
+                </button>
+              )}
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleLogout}
+                className="inline-flex items-center justify-center gap-2 border border-dark-border bg-dark-card hover:border-gold/40 hover:text-gold text-gray-300 px-4 py-2.5 rounded-xl text-sm transition-colors"
+              >
+                <LogOut size={16} />
+                Logout
+              </motion.button>
+            </div>
           </div>
         </motion.div>
+
+        {!selectedProperty && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-1 gap-5 md:grid-cols-2"
+          >
+            {properties.map((property, index) => (
+              <motion.button
+                key={property.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.06 }}
+                onClick={() => chooseProperty(property.id)}
+                className="rounded-2xl border border-dark-border bg-dark-card p-6 text-left transition-colors hover:border-gold/40"
+              >
+                <p className="mb-2 text-xs uppercase tracking-[0.24em] text-gold/70">Choose property</p>
+                <h2 className="text-2xl font-semibold text-white">{property.name}</h2>
+                <p className="mt-2 text-sm text-gold">{property.city}</p>
+                <p className="mt-4 text-sm leading-relaxed text-gray-400">
+                  {property.description || `Manage bookings, rooms, pricing, and gallery for ${property.name} in ${property.city}.`}
+                </p>
+                <span className="mt-6 inline-flex rounded-full border border-gold/30 bg-gold/10 px-4 py-2 text-xs uppercase tracking-[0.18em] text-gold">
+                  Enter dashboard
+                </span>
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
+
+        {selectedProperty && (
+          <>
 
         {/* Stats */}
         <motion.div
@@ -966,6 +1057,8 @@ export default function AdminPage() {
             </motion.div>
           )}
         </AnimatePresence>
+          </>
+        )}
       </div>
 
       {/* Room Modal */}

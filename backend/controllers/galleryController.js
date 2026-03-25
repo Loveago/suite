@@ -5,8 +5,13 @@ const prisma = new PrismaClient();
 exports.getAllGalleryImages = async (req, res) => {
   try {
     const includeArchived = req.query.includeArchived === 'true';
+    const propertyId = req.query.propertyId;
     const images = await prisma.galleryImage.findMany({
-      where: includeArchived ? undefined : { isActive: true },
+      where: {
+        ...(includeArchived ? {} : { isActive: true }),
+        ...(propertyId ? { propertyId } : {}),
+      },
+      include: { property: true },
       orderBy: { order: 'asc' },
     });
     res.json(images);
@@ -18,9 +23,15 @@ exports.getAllGalleryImages = async (req, res) => {
 // Create a new gallery image
 exports.createGalleryImage = async (req, res) => {
   try {
-    const { url, caption, order } = req.body;
+    const { url, caption, order, propertyId } = req.body;
+
+    if (!propertyId) {
+      return res.status(400).json({ error: 'Property is required' });
+    }
+
     const image = await prisma.galleryImage.create({
-      data: { url, caption, order: order || 0, isActive: true, archivedAt: null },
+      data: { url, caption, order: order || 0, isActive: true, archivedAt: null, propertyId },
+      include: { property: true },
     });
     res.status(201).json(image);
   } catch (error) {
@@ -32,10 +43,11 @@ exports.createGalleryImage = async (req, res) => {
 exports.updateGalleryImage = async (req, res) => {
   try {
     const { id } = req.params;
-    const { url, caption, order } = req.body;
+    const { url, caption, order, propertyId } = req.body;
     const image = await prisma.galleryImage.update({
       where: { id },
-      data: { url, caption, order },
+      data: { url, caption, order, ...(propertyId ? { propertyId } : {}) },
+      include: { property: true },
     });
     res.json(image);
   } catch (error) {

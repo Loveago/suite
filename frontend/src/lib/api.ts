@@ -1,5 +1,26 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
+const toQueryString = (params?: Record<string, string | number | boolean | undefined>) => {
+  if (!params) return '';
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      searchParams.set(key, String(value));
+    }
+  });
+  const query = searchParams.toString();
+  return query ? `?${query}` : '';
+};
+
+export interface Property {
+  id: string;
+  name: string;
+  slug: string;
+  city: string;
+  description: string | null;
+  createdAt: string;
+}
+
 export interface Room {
   id: string;
   name: string;
@@ -14,6 +35,8 @@ export interface Room {
   property?: {
     id: string;
     name: string;
+    slug?: string;
+    city?: string;
     description: string;
   };
   bookings?: Booking[];
@@ -43,6 +66,8 @@ export interface GalleryImage {
   url: string;
   caption: string | null;
   order: number;
+  propertyId?: string;
+  property?: Property;
   createdAt: string;
 }
 
@@ -62,18 +87,23 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
 }
 
 export const api = {
+  properties: {
+    getAll: () => fetchAPI<Property[]>('/properties'),
+  },
   rooms: {
-    getAll: () => fetchAPI<Room[]>('/rooms'),
+    getAll: (params?: { propertyId?: string; includeArchived?: boolean }) =>
+      fetchAPI<Room[]>(`/rooms${toQueryString(params)}`),
     getById: (id: string) => fetchAPI<Room>(`/rooms/${id}`),
     create: (data: Partial<Room>) => fetchAPI<Room>('/rooms', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: Partial<Room>) => fetchAPI<Room>(`/rooms/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) => fetchAPI<{ message: string }>(`/rooms/${id}`, { method: 'DELETE' }),
   },
   bookings: {
-    getAll: () => fetchAPI<Booking[]>('/bookings'),
+    getAll: (params?: { propertyId?: string }) => fetchAPI<Booking[]>(`/bookings${toQueryString(params)}`),
     create: (data: {
       roomId?: string;
       roomCategory?: string;
+      propertyId?: string;
       checkIn: string;
       checkOut: string;
       guestName?: string;
@@ -98,10 +128,10 @@ export const api = {
     },
   },
   gallery: {
-    getAll: () => fetchAPI<GalleryImage[]>('/gallery'),
-    create: (data: { url: string; caption?: string; order?: number }) =>
+    getAll: (params?: { propertyId?: string; includeArchived?: boolean }) => fetchAPI<GalleryImage[]>(`/gallery${toQueryString(params)}`),
+    create: (data: { url: string; caption?: string; order?: number; propertyId: string }) =>
       fetchAPI<GalleryImage>('/gallery', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: { url?: string; caption?: string; order?: number }) =>
+    update: (id: string, data: { url?: string; caption?: string; order?: number; propertyId?: string }) =>
       fetchAPI<GalleryImage>(`/gallery/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     delete: (id: string) => fetchAPI<{ message: string }>(`/gallery/${id}`, { method: 'DELETE' }),
   },

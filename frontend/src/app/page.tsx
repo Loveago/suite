@@ -17,7 +17,8 @@ import {
   Star,
 } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
-import { api, Room, formatCurrency, getImageUrl } from '@/lib/api';
+import { api, Property, Room, formatCurrency, getImageUrl } from '@/lib/api';
+import { defaultProperties, getDefaultRoomsForProperty } from '@/lib/default-room-catalog';
 import { useBookingStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
 
@@ -114,6 +115,8 @@ const guestStories = [
 
 export default function Home() {
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [properties, setProperties] = useState<Property[]>(defaultProperties);
+  const [selectedPropertyId, setSelectedPropertyId] = useState(defaultProperties[0].id);
   const [heroIndex, setHeroIndex] = useState(0);
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
@@ -122,6 +125,13 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
+    api.properties.getAll().then((data) => {
+      if (data.length > 0) {
+        setProperties(data);
+        setSelectedPropertyId((current) => current || data[0].id);
+      }
+    }).catch(() => setProperties(defaultProperties));
+
     api.rooms.getAll().then(setRooms).catch(() => setRooms([]));
   }, []);
 
@@ -132,12 +142,19 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const displayRooms = rooms.length > 0 ? rooms.slice(0, 3) : placeholderRooms;
+  const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || properties[0] || defaultProperties[0];
+  const propertyRooms = rooms.filter((room) => room.propertyId === selectedPropertyId);
+  const fallbackPropertyRooms = getDefaultRoomsForProperty(selectedPropertyId);
+  const displayRooms = (propertyRooms.length > 0 ? propertyRooms : fallbackPropertyRooms).slice(0, 3);
 
   const handleSearch = () => {
     if (checkIn) setDates(checkIn, checkOut);
     if (guests) setStoreGuests(guests);
-    router.push('/rooms');
+    const searchParams = new URLSearchParams();
+    if (selectedPropertyId) {
+      searchParams.set('propertyId', selectedPropertyId);
+    }
+    router.push(`/rooms${searchParams.toString() ? `?${searchParams.toString()}` : ''}`);
   };
 
   const getRoomImageLayer = (room: Room | typeof placeholderRooms[0], index: number) => {
@@ -209,13 +226,28 @@ export default function Home() {
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/6 bg-white/[0.02] px-4 py-3">
                 <div>
                   <p className="text-[11px] uppercase tracking-[0.3em] text-gold/80">Luxury Reservation</p>
-                  <p className="mt-1 text-sm text-gray-300">Secure your preferred room in a few elegant steps.</p>
+                  <p className="mt-1 text-sm text-gray-300">Choose your property, dates, and guests to explore the right rooms instantly.</p>
                 </div>
                 <div className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-emerald-200">
                   Instant confirmation
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_0.8fr_auto] gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-[1.1fr_1fr_1fr_0.8fr_auto] gap-3">
+                <div className="relative">
+                  <label className="block text-[11px] text-gold/80 mb-1 tracking-[0.16em]">WHERE TO?</label>
+                  <select
+                    value={selectedPropertyId}
+                    onChange={(e) => setSelectedPropertyId(e.target.value)}
+                    className="w-full h-14 bg-white/[0.03] border border-gold/20 rounded-2xl px-4 pr-11 text-white text-sm shadow-inner shadow-black/20 focus:outline-none focus:border-gold focus:ring-2 focus:ring-gold/25 transition-all appearance-none cursor-pointer"
+                  >
+                    {properties.map((property) => (
+                      <option key={property.id} value={property.id}>
+                        {property.city} - {property.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 bottom-3.5 w-4 h-4 text-gold/70 pointer-events-none" />
+                </div>
                 <div className="relative">
                   <label className="block text-[11px] text-gold/80 mb-1 tracking-[0.16em]">CHECK IN</label>
                   <input
@@ -264,7 +296,7 @@ export default function Home() {
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-gray-300">
-                {['Free cancellation within 24h', 'Concierge included', 'Curated luxury stays'].map((note) => (
+                {[selectedProperty ? `${selectedProperty.name} · ${selectedProperty.city}` : 'Luxury destination', 'Free cancellation within 24h', 'Concierge included', 'Curated luxury stays'].map((note) => (
                   <span key={note} className="inline-flex items-center rounded-full border border-gold/20 bg-white/[0.03] px-3 py-1.5">
                     {note}
                   </span>
@@ -283,7 +315,7 @@ export default function Home() {
               Explore Our Luxury Rooms
             </h2>
             <p className="text-gray-400 text-sm tracking-wide">
-              Handpicked for Your Perfect Stay
+              {selectedProperty ? `${selectedProperty.name} in ${selectedProperty.city}` : 'Handpicked for Your Perfect Stay'}
             </p>
           </motion.div>
 

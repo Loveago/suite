@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import { Calendar, User, Check, BedDouble, ChevronRight, ChevronLeft, Sparkles } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
 import PriceWithUsd from '@/components/PriceWithUsd';
-import { api, Room, formatCurrency } from '@/lib/api';
-import { defaultRooms, roomCategoryOrder } from '@/lib/default-room-catalog';
+import { api, Property, Room, formatCurrency } from '@/lib/api';
+import { defaultProperties, getDefaultRoomsForProperty, roomCategoryOrder } from '@/lib/default-room-catalog';
 import { useRouter } from 'next/navigation';
 
 const STEPS = [
@@ -29,9 +29,11 @@ const labelCls = 'block text-gray-400 text-xs font-semibold uppercase tracking-w
 export default function BookNowPage() {
   const router = useRouter();
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [properties, setProperties] = useState<Property[]>(defaultProperties);
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState(1);
 
+  const [selectedPropertyId, setSelectedPropertyId] = useState(defaultProperties[0].id);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedRoomId, setSelectedRoomId] = useState('');
   const [checkIn, setCheckIn] = useState('');
@@ -48,13 +50,26 @@ export default function BookNowPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.rooms.getAll().then((data) => setRooms(data.length ? data : defaultRooms)).catch(() => setRooms(defaultRooms));
+    api.properties.getAll().then((data) => setProperties(data.length ? data : defaultProperties)).catch(() => setProperties(defaultProperties));
   }, []);
+
+  useEffect(() => {
+    api.rooms
+      .getAll({ propertyId: selectedPropertyId })
+      .then((data) => setRooms(data.length ? data : getDefaultRoomsForProperty(selectedPropertyId)))
+      .catch(() => setRooms(getDefaultRoomsForProperty(selectedPropertyId)));
+  }, []);
+
+  useEffect(() => {
+    setSelectedCategory('');
+    setSelectedRoomId('');
+  }, [selectedPropertyId]);
 
   const categories = roomCategoryOrder.filter((category) => rooms.some((room) => room.category === category));
   const roomsInSelectedCategory = rooms.filter((room) => room.category === selectedCategory);
   const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
   const selectedCategoryPrice = roomsInSelectedCategory[0]?.price || 0;
+  const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || defaultProperties[0];
   const nights = (() => {
     if (!checkIn || !checkOut) return 0;
     return Math.max(0, Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000));
@@ -92,6 +107,7 @@ export default function BookNowPage() {
       await api.bookings.create({
         roomId: selectedRoomId || undefined,
         roomCategory: selectedCategory,
+        propertyId: selectedPropertyId,
         checkIn,
         checkOut,
         guestName: `${firstName} ${lastName}`,
@@ -205,9 +221,20 @@ export default function BookNowPage() {
                   exit="exit"
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <div className="bg-dark-card border border-dark-border rounded-2xl p-6 sm:p-8 space-y-5 text-center">
+                  <div className="bg-dark-card border border-dark-border rounded-2xl p-6 sm:p-8 space-y-6">
                     <div>
-                      <label className={labelCls}>Room Type <span className="text-gold normal-case tracking-normal">*</span></label>
+                      <label className={labelCls}>Where to?</label>
+                      <select value={selectedPropertyId} onChange={(e) => setSelectedPropertyId(e.target.value)} className={inputCls}>
+                        {properties.map((property) => (
+                          <option key={property.id} value={property.id}>
+                            {property.name} · {property.city}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className={labelCls}>Room Category</label>
                       <select
                         value={selectedCategory}
                         onChange={(e) => {
@@ -381,6 +408,7 @@ export default function BookNowPage() {
 
                     <div className="space-y-3 mb-6">
                       {[
+                        { label: 'Property', value: `${selectedProperty.name} · ${selectedProperty.city}` },
                         { label: 'Room Type', value: selectedCategory ? `${selectedCategory} Room` : '—' },
                         { label: 'Room Number', value: selectedRoom?.roomNumber || 'Random available room' },
                         { label: 'Check-in', value: formatDate(checkIn) },

@@ -4,8 +4,12 @@ const prisma = new PrismaClient();
 const getAllRooms = async (req, res) => {
   try {
     const includeArchived = req.query.includeArchived === 'true';
+    const propertyId = req.query.propertyId;
     const rooms = await prisma.room.findMany({
-      where: includeArchived ? undefined : { isActive: true },
+      where: {
+        ...(includeArchived ? {} : { isActive: true }),
+        ...(propertyId ? { propertyId } : {}),
+      },
       include: { property: true },
       orderBy: [{ category: 'asc' }, { roomNumber: 'asc' }],
     });
@@ -53,7 +57,7 @@ const createRoom = async (req, res) => {
 
 const updateRoom = async (req, res) => {
   try {
-    const { name, category, roomNumber, description, price, images, isBooked } = req.body;
+    const { name, category, roomNumber, description, price, images, isBooked, propertyId } = req.body;
     const data = {};
     if (name !== undefined) data.name = name;
     if (category !== undefined) data.category = category;
@@ -62,6 +66,7 @@ const updateRoom = async (req, res) => {
     if (price !== undefined) data.price = parseFloat(price);
     if (images !== undefined) data.images = images;
     if (isBooked !== undefined) data.isBooked = Boolean(isBooked);
+    if (propertyId !== undefined) data.propertyId = propertyId;
 
     const room = await prisma.room.update({
       where: { id: req.params.id },

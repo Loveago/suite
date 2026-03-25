@@ -4,29 +4,66 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { Camera, X } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
-import Image from 'next/image';
+import { api, GalleryImage, Property } from '@/lib/api';
+import { defaultProperties, fallbackGalleryImagesByProperty } from '@/lib/default-room-catalog';
 
-const galleryImages = [
-  'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80',
-  'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&q=80',
-  'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1200&q=80',
-  'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&q=80',
-  'https://images.unsplash.com/photo-1591088398332-8a7791972843?w=1200&q=80',
-  'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1200&q=80',
-  'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?w=1200&q=80',
-  'https://images.unsplash.com/photo-1616594039964-58e5f4f7b7dd?w=1200&q=80',
-  'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1200&q=80',
-  'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=1200&q=80',
-  'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=1200&q=80',
-  'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&q=80',
-];
+interface GallerySection {
+  property: Property;
+  images: { id: string; url: string; caption?: string | null }[];
+}
 
 export default function GalleryPage() {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<{ url: string; caption?: string | null } | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [sections, setSections] = useState<GallerySection[]>(
+    defaultProperties.map((property) => ({
+      property,
+      images: fallbackGalleryImagesByProperty[property.slug].map((url, index) => ({
+        id: `${property.id}-fallback-${index}`,
+        url,
+      })),
+    }))
+  );
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    Promise.all([
+      api.properties.getAll().catch(() => defaultProperties),
+      api.gallery.getAll().catch(() => [] as GalleryImage[]),
+    ]).then(([propertiesData, galleryData]) => {
+      const properties = propertiesData.length > 0 ? propertiesData : defaultProperties;
+
+      const nextSections = properties.map((property) => {
+        const propertyImages = galleryData
+          .filter((image) => image.propertyId === property.id)
+          .map((image) => ({
+            id: image.id,
+            url: image.url,
+            caption: image.caption,
+          }));
+
+        return {
+          property,
+          images:
+            propertyImages.length > 0
+              ? propertyImages
+              : (fallbackGalleryImagesByProperty[property.slug] || []).map((url, index) => ({
+                  id: `${property.id}-fallback-${index}`,
+                  url,
+                })),
+        };
+      });
+
+      const propertyOrder = defaultProperties.map((property) => property.slug);
+      nextSections.sort(
+        (a, b) => propertyOrder.indexOf(a.property.slug) - propertyOrder.indexOf(b.property.slug)
+      );
+
+      setSections(nextSections);
+    });
   }, []);
 
   useEffect(() => {
@@ -54,32 +91,58 @@ export default function GalleryPage() {
               Property Gallery
             </h1>
             <p className="text-gray-300 text-lg sm:text-xl max-w-2xl mx-auto text-center">
-              Explore the elegance and luxury of THE SUITE through our curated collection
+              Explore both properties through curated visual collections from Tema and Accra.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {galleryImages.map((image, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.05 }}
-                whileHover={{ y: -8 }}
-                className="group relative aspect-[4/3] overflow-hidden rounded-2xl border border-dark-border bg-dark-card cursor-pointer"
-                onClick={() => setSelectedImage(image)}
-              >
-                <div
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                  style={{ backgroundImage: `url(${image})` }}
-                />
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-300" />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="w-14 h-14 rounded-full bg-gold/90 flex items-center justify-center">
-                    <Camera className="w-6 h-6 text-dark" />
-                  </div>
+          <div className="space-y-14">
+            {sections.map((section, sectionIndex) => (
+              <section key={section.property.id}>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: sectionIndex * 0.08 }}
+                  className="mb-6 text-center sm:text-left"
+                >
+                  <p className="mb-2 text-xs uppercase tracking-[0.28em] text-gold/70">Property</p>
+                  <h2 className="text-3xl sm:text-4xl font-light text-white font-serif italic">
+                    {section.property.name} <span className="text-gold">· {section.property.city}</span>
+                  </h2>
+                  <p className="mt-3 max-w-3xl text-sm text-gray-400">
+                    {section.property.description || `Explore ${section.property.name} in ${section.property.city}.`}
+                  </p>
+                </motion.div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {section.images.map((image, index) => (
+                    <motion.div
+                      key={image.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.05 }}
+                      whileHover={{ y: -8 }}
+                      className="group relative aspect-[4/3] overflow-hidden rounded-2xl border border-dark-border bg-dark-card cursor-pointer"
+                      onClick={() => setSelectedImage({ url: image.url, caption: image.caption })}
+                    >
+                      <div
+                        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                        style={{ backgroundImage: `url(${image.url})` }}
+                      />
+                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-300" />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="w-14 h-14 rounded-full bg-gold/90 flex items-center justify-center">
+                          <Camera className="w-6 h-6 text-dark" />
+                        </div>
+                      </div>
+                      {image.caption && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-4 py-3">
+                          <p className="text-sm text-white">{image.caption}</p>
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
                 </div>
-              </motion.div>
+              </section>
             ))}
           </div>
         </div>
@@ -109,10 +172,15 @@ export default function GalleryPage() {
               <div
                 className="w-full h-full bg-cover bg-center rounded-xl"
                 style={{
-                  backgroundImage: `url(${selectedImage})`,
+                  backgroundImage: `url(${selectedImage.url})`,
                   minHeight: '60vh',
                 }}
               />
+              {selectedImage.caption && (
+                <div className="mt-4 rounded-xl border border-dark-border bg-dark-card/80 px-4 py-3 text-center text-sm text-gray-200">
+                  {selectedImage.caption}
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}

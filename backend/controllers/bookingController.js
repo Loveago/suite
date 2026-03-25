@@ -21,7 +21,7 @@ const syncRoomBookedStatus = async (roomId) => {
 
 const createBooking = async (req, res) => {
   try {
-    const { roomId, roomCategory, checkIn, checkOut, guestName, guestEmail, guestPhone, guests, paymentMethod } = req.body;
+    const { roomId, roomCategory, propertyId, checkIn, checkOut, guestName, guestEmail, guestPhone, guests, paymentMethod } = req.body;
 
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
@@ -32,6 +32,10 @@ const createBooking = async (req, res) => {
 
     if (!roomId && !roomCategory) {
       return res.status(400).json({ error: 'Room or room category is required' });
+    }
+
+    if (!roomId && !propertyId) {
+      return res.status(400).json({ error: 'Property is required when booking by category' });
     }
 
     const overlappingRoomIds = await prisma.booking.findMany({
@@ -64,6 +68,7 @@ const createBooking = async (req, res) => {
       const availableRooms = await prisma.room.findMany({
         where: {
           category: roomCategory,
+          propertyId,
           isActive: true,
           isBooked: false,
           id: { notIn: unavailableRoomIds },
@@ -115,8 +120,16 @@ const createBooking = async (req, res) => {
 
 const getAllBookings = async (req, res) => {
   try {
+    const propertyId = req.query.propertyId;
     const bookings = await prisma.booking.findMany({
-      include: { room: true },
+      where: propertyId
+        ? {
+            room: {
+              propertyId,
+            },
+          }
+        : undefined,
+      include: { room: { include: { property: true } } },
       orderBy: { createdAt: 'desc' },
     });
     res.json(bookings);
@@ -181,7 +194,7 @@ const updateBooking = async (req, res) => {
     const booking = await prisma.booking.update({
       where: { id: req.params.id },
       data: updateData,
-      include: { room: true },
+      include: { room: { include: { property: true } } },
     });
 
     if (status && (ACTIVE_BOOKING_STATUSES.includes(status) || ACTIVE_BOOKING_STATUSES.includes(existingBooking.status) || status === 'cancelled' || status === 'checked_out')) {

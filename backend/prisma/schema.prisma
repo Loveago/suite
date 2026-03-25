@@ -8,11 +8,14 @@ datasource db {
 }
 
 model Property {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  rooms       Room[]
-  createdAt   DateTime @default(now())
+  id            String         @id @default(uuid())
+  name          String
+  slug          String         @unique
+  city          String
+  description   String?
+  rooms         Room[]
+  galleryImages GalleryImage[]
+  createdAt     DateTime       @default(now())
 }
 
 model Room {
@@ -52,11 +55,13 @@ model Booking {
 }
 
 model GalleryImage {
-  id        String   @id @default(uuid())
-  url       String
-  caption   String?
-  order     Int      @default(0)
-  isActive  Boolean  @default(true)
+  id         String    @id @default(uuid())
+  url        String
+  caption    String?
+  order      Int       @default(0)
+  isActive   Boolean   @default(true)
   archivedAt DateTime?
-  createdAt DateTime @default(now())
+  propertyId String
+  property   Property  @relation(fields: [propertyId], references: [id])
+  createdAt  DateTime  @default(now())
 }

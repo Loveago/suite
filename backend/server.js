@@ -5,6 +5,7 @@ const roomRoutes = require('./routes/roomRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const galleryRoutes = require('./routes/galleryRoutes');
+const propertyRoutes = require('./routes/propertyRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -17,6 +18,7 @@ app.use('/api/rooms', roomRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/gallery', galleryRoutes);
+app.use('/api/properties', propertyRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'THE SUITE API is running' });
