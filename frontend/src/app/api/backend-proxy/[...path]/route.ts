@@ -14,8 +14,8 @@ const buildTargetUrl = (path: string[], request: NextRequest) => {
   return target;
 };
 
-const forwardRequest = async (request: NextRequest, context: { params: { path: string[] } }) => {
-  const { path } = context.params;
+const forwardRequest = async (request: NextRequest, context: { params: Promise<{ path: string[] }> }) => {
+  const { path } = await context.params;
   const cookieStore = await cookies();
   const sessionValue = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
 
