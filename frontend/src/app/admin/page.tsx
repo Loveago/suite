@@ -88,20 +88,26 @@ export default function AdminPage() {
         ]);
 
         const normalizedProperties = propertiesData.length > 0 ? propertiesData : defaultProperties;
+        const mergedProperties = [
+          ...normalizedProperties,
+          ...defaultProperties.filter(
+            (fallbackProperty) => !normalizedProperties.some((property) => property.slug === fallbackProperty.slug)
+          ),
+        ];
         const statusData = statusResponse
           ? await statusResponse.json().catch(() => ({ authenticated: false, session: null }))
           : { authenticated: false, session: null };
         const session = statusData.authenticated ? (statusData.session as AdminSessionData | null) : null;
         const scopedProperties =
           session?.role === 'property' && session.propertySlug
-            ? normalizedProperties.filter((property) => property.slug === session.propertySlug)
-            : normalizedProperties;
+            ? mergedProperties.filter((property) => property.slug === session.propertySlug)
+            : mergedProperties;
 
         setAdminSession(session);
-        setProperties(scopedProperties.length > 0 ? scopedProperties : normalizedProperties);
+        setProperties(scopedProperties.length > 0 ? scopedProperties : mergedProperties);
 
         if (session?.role === 'property' && session.propertySlug) {
-          const allowedProperty = normalizedProperties.find((property) => property.slug === session.propertySlug);
+          const allowedProperty = mergedProperties.find((property) => property.slug === session.propertySlug);
 
           if (allowedProperty) {
             latestBookingIdsRef.current = [];
