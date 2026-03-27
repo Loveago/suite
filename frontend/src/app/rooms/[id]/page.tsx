@@ -177,7 +177,7 @@ export default function RoomDetailPage() {
 
   const handleBookNow = () => {
     if (!room || room.isBooked) return;
-    setStoreRoom(room.id, room.name, room.price);
+    setStoreRoom(room.id, room.name, room.price, room.category, room.propertyId);
     if (checkIn && checkOut) setDates(checkIn, checkOut);
     setStoreGuests(guests);
     router.push('/booking');

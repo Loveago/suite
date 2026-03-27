@@ -6,6 +6,8 @@ interface BookingState {
   roomId: string | null;
   roomName: string | null;
   roomPrice: number | null;
+  roomCategory: string | null;
+  propertyId: string | null;
   checkIn: string;
   checkOut: string;
   guests: number;
@@ -14,7 +16,7 @@ interface BookingState {
   guestPhone: string;
   paymentMethod: string;
   step: number;
-  setRoom: (id: string, name: string, price: number) => void;
+  setRoom: (id: string, name: string, price: number, category: string, propertyId: string) => void;
   setDates: (checkIn: string, checkOut: string) => void;
   setGuests: (guests: number) => void;
   setGuestDetails: (name: string, email: string, phone: string) => void;
@@ -29,6 +31,8 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   roomId: null,
   roomName: null,
   roomPrice: null,
+  roomCategory: null,
+  propertyId: null,
   checkIn: '',
   checkOut: '',
   guests: 2,
@@ -37,7 +41,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   guestPhone: '',
   paymentMethod: 'cash_on_arrival',
   step: 1,
-  setRoom: (id, name, price) => set({ roomId: id, roomName: name, roomPrice: price }),
+  setRoom: (id, name, price, category, propertyId) => set({ roomId: id, roomName: name, roomPrice: price, roomCategory: category, propertyId }),
   setDates: (checkIn, checkOut) => set({ checkIn, checkOut }),
   setGuests: (guests) => set({ guests }),
   setGuestDetails: (guestName, guestEmail, guestPhone) => set({ guestName, guestEmail, guestPhone }),
@@ -48,6 +52,8 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       roomId: null,
       roomName: null,
       roomPrice: null,
+      roomCategory: null,
+      propertyId: null,
       checkIn: '',
       checkOut: '',
       guests: 2,

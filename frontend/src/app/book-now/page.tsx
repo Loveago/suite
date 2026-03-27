@@ -58,7 +58,7 @@ export default function BookNowPage() {
       .getAll({ propertyId: selectedPropertyId })
       .then((data) => setRooms(data.length ? data : getDefaultRoomsForProperty(selectedPropertyId)))
       .catch(() => setRooms(getDefaultRoomsForProperty(selectedPropertyId)));
-  }, []);
+  }, [selectedPropertyId]);
 
   useEffect(() => {
     setSelectedCategory('');

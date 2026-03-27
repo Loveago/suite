@@ -101,6 +101,7 @@ export const api = {
   },
   bookings: {
     getAll: (params?: { propertyId?: string }) => fetchAPI<Booking[]>(`/bookings${toQueryString(params)}`),
+    search: (query: string) => fetchAPI<Booking[]>(`/bookings/search${toQueryString({ query })}`),
     create: (data: {
       roomId?: string;
       roomCategory?: string;

@@ -4,6 +4,16 @@ const prisma = new PrismaClient();
 
 const ACTIVE_BOOKING_STATUSES = ['confirmed', 'received'];
 
+const normalizeSearchQuery = (value) => String(value || '').trim();
+
+const buildAvailableRoomWhere = ({ propertyId, roomCategory, unavailableRoomIds }) => ({
+  ...(roomCategory ? { category: roomCategory } : {}),
+  ...(propertyId ? { propertyId } : {}),
+  isActive: true,
+  isBooked: false,
+  id: { notIn: unavailableRoomIds },
+});
+
 const syncRoomBookedStatus = async (roomId) => {
   const activeBooking = await prisma.booking.findFirst({
     where: {
@@ -54,6 +64,12 @@ const createBooking = async (req, res) => {
 
     if (roomId) {
       room = await prisma.room.findUnique({ where: { id: roomId } });
+      if (!room && roomCategory && propertyId) {
+        room = await prisma.room.findFirst({
+          where: buildAvailableRoomWhere({ propertyId, roomCategory, unavailableRoomIds }),
+          orderBy: { roomNumber: 'asc' },
+        });
+      }
       if (!room) return res.status(404).json({ error: 'Room not found' });
       if (room.isActive === false) {
         return res.status(409).json({ error: 'Selected room is no longer available' });
@@ -66,13 +82,7 @@ const createBooking = async (req, res) => {
       }
     } else {
       const availableRooms = await prisma.room.findMany({
-        where: {
-          category: roomCategory,
-          propertyId,
-          isActive: true,
-          isBooked: false,
-          id: { notIn: unavailableRoomIds },
-        },
+        where: buildAvailableRoomWhere({ propertyId, roomCategory, unavailableRoomIds }),
         orderBy: { roomNumber: 'asc' },
       });
 
@@ -115,6 +125,32 @@ const createBooking = async (req, res) => {
     res.status(201).json(booking);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create booking', details: error.message });
+  }
+};
+
+const searchPublicBookings = async (req, res) => {
+  try {
+    const query = normalizeSearchQuery(req.query.query);
+
+    if (!query) {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+
+    const bookings = await prisma.booking.findMany({
+      where: {
+        OR: [
+          { id: { contains: query, mode: 'insensitive' } },
+          { guestEmail: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+      include: { room: { include: { property: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+
+    res.json(bookings);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to search bookings' });
   }
 };
 
@@ -218,4 +254,4 @@ const updateBooking = async (req, res) => {
   }
 };
 
-module.exports = { createBooking, getAllBookings, updateBooking };
+module.exports = { createBooking, getAllBookings, searchPublicBookings, updateBooking };

@@ -54,6 +54,8 @@ export default function BookingPage() {
     try {
       const booking = await api.bookings.create({
         roomId: store.roomId,
+        roomCategory: store.roomCategory || undefined,
+        propertyId: store.propertyId || undefined,
         checkIn: store.checkIn,
         checkOut: store.checkOut,
         guestName: store.guestName,

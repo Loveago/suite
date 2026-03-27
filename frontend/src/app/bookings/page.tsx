@@ -19,8 +19,7 @@ const statusFilters = ['all', 'confirmed', 'pending', 'received', 'checked_out',
 type StatusFilter = (typeof statusFilters)[number];
 
 export default function BookingsPage() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchEmail, setSearchEmail] = useState('');
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [searched, setSearched] = useState(false);
@@ -30,20 +29,6 @@ export default function BookingsPage() {
   const [activeBackdrop, setActiveBackdrop] = useState(0);
 
   useEffect(() => {
-    api.bookings
-      .getAll()
-      .then((data) => {
-        setBookings(data);
-        setLoadError('');
-        setLoading(false);
-      })
-      .catch(() => {
-        setLoadError('Unable to load bookings right now. Please try again in a moment.');
-        setLoading(false);
-      });
-  }, []);
-
-  useEffect(() => {
     const interval = setInterval(() => {
       setActiveBackdrop((prev) => (prev + 1) % roomBackdropImages.length);
     }, 5500);
@@ -51,24 +36,32 @@ export default function BookingsPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     const query = searchEmail.trim().toLowerCase();
 
     if (!query) {
       setFilteredBookings([]);
       setSearched(false);
       setActiveStatus('all');
+      setLoadError('');
       return;
     }
 
-    const results = bookings.filter(
-      (b) =>
-        b.guestEmail?.toLowerCase().includes(query) ||
-        b.id.toLowerCase().includes(query)
-    );
+    setLoading(true);
+    setLoadError('');
 
-    setFilteredBookings(results);
-    setSearched(true);
+    try {
+      const results = await api.bookings.search(query);
+      setFilteredBookings(results);
+      setSearched(true);
+      setActiveStatus('all');
+    } catch {
+      setFilteredBookings([]);
+      setSearched(true);
+      setLoadError('Unable to load bookings right now. Please try again in a moment.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const searchedBookings = searched ? filteredBookings : [];
