@@ -15,7 +15,7 @@ const getAllProperties = async (_req, res) => {
         return {
           ...property,
           name: isAccraProperty ? 'Kingstel Escape' : property.name,
-          slug: property.slug || (isAccraProperty ? 'kingstel-escape-accra' : 'the-suite-tema'),
+          slug: isAccraProperty ? 'kingstel-escape-accra' : property.slug || 'the-suite-tema',
           city: property.city || (isAccraProperty ? 'Accra' : 'Tema'),
         };
       })
