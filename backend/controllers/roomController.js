@@ -4,7 +4,14 @@ const prisma = new PrismaClient();
 const getAllRooms = async (req, res) => {
   try {
     const includeArchived = req.query.includeArchived === 'true';
-    const propertyId = req.query.propertyId;
+    const propertyId = req.adminSession?.role === 'property'
+      ? req.adminScopedProperty?.id
+      : req.query.propertyId;
+
+    if (req.adminSession?.role === 'property' && !propertyId) {
+      return res.status(403).json({ error: 'Assigned property could not be resolved for this admin account' });
+    }
+
     const rooms = await prisma.room.findMany({
       where: {
         ...(includeArchived ? {} : { isActive: true }),
@@ -26,6 +33,11 @@ const getRoomById = async (req, res) => {
       include: { property: true, bookings: true },
     });
     if (!room || room.isActive === false) return res.status(404).json({ error: 'Room not found' });
+
+    if (req.adminSession?.role === 'property' && room.propertyId !== req.adminScopedProperty?.id) {
+      return res.status(403).json({ error: 'You do not have access to this property' });
+    }
+
     res.json(room);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch room' });
@@ -34,7 +46,15 @@ const getRoomById = async (req, res) => {
 
 const createRoom = async (req, res) => {
   try {
-    const { name, category, roomNumber, description, price, images, isBooked, propertyId } = req.body;
+    const { name, category, roomNumber, description, price, images, isBooked } = req.body;
+    const propertyId = req.adminSession?.role === 'property'
+      ? req.adminScopedProperty?.id
+      : req.body.propertyId;
+
+    if (!propertyId) {
+      return res.status(400).json({ error: 'Property is required' });
+    }
+
     const room = await prisma.room.create({
       data: {
         name,
@@ -57,6 +77,19 @@ const createRoom = async (req, res) => {
 
 const updateRoom = async (req, res) => {
   try {
+    const existingRoom = await prisma.room.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, propertyId: true },
+    });
+
+    if (!existingRoom) {
+      return res.status(404).json({ error: 'Room not found' });
+    }
+
+    if (req.adminSession?.role === 'property' && existingRoom.propertyId !== req.adminScopedProperty?.id) {
+      return res.status(403).json({ error: 'You do not have access to this property' });
+    }
+
     const { name, category, roomNumber, description, price, images, isBooked, propertyId } = req.body;
     const data = {};
     if (name !== undefined) data.name = name;
@@ -66,7 +99,7 @@ const updateRoom = async (req, res) => {
     if (price !== undefined) data.price = parseFloat(price);
     if (images !== undefined) data.images = images;
     if (isBooked !== undefined) data.isBooked = Boolean(isBooked);
-    if (propertyId !== undefined) data.propertyId = propertyId;
+    if (req.adminSession?.role !== 'property' && propertyId !== undefined) data.propertyId = propertyId;
 
     const room = await prisma.room.update({
       where: { id: req.params.id },
@@ -80,6 +113,19 @@ const updateRoom = async (req, res) => {
 
 const deleteRoom = async (req, res) => {
   try {
+    const existingRoom = await prisma.room.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, propertyId: true },
+    });
+
+    if (!existingRoom) {
+      return res.status(404).json({ error: 'Room not found' });
+    }
+
+    if (req.adminSession?.role === 'property' && existingRoom.propertyId !== req.adminScopedProperty?.id) {
+      return res.status(403).json({ error: 'You do not have access to this property' });
+    }
+
     const archivedRoom = await prisma.room.update({
       where: { id: req.params.id },
       data: {

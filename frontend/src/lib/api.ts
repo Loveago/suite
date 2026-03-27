@@ -74,6 +74,7 @@ export interface GalleryImage {
 async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
@@ -121,6 +122,7 @@ export const api = {
       Array.from(files).forEach((file) => formData.append('images', file));
       const res = await fetch(`${API_BASE.replace('/api', '')}/api/upload/room-images`, {
         method: 'POST',
+        credentials: 'include',
         body: formData,
       });
       if (!res.ok) throw new Error('Upload failed');

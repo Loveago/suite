@@ -1,5 +1,9 @@
 const uploadRoomImages = async (req, res) => {
   try {
+    if (req.adminSession?.role === 'property' && !req.adminScopedProperty?.id) {
+      return res.status(403).json({ error: 'Assigned property could not be resolved for this admin account' });
+    }
+
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: 'No files uploaded' });
     }

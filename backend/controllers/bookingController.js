@@ -120,7 +120,14 @@ const createBooking = async (req, res) => {
 
 const getAllBookings = async (req, res) => {
   try {
-    const propertyId = req.query.propertyId;
+    const propertyId = req.adminSession?.role === 'property'
+      ? req.adminScopedProperty?.id
+      : req.query.propertyId;
+
+    if (req.adminSession?.role === 'property' && !propertyId) {
+      return res.status(403).json({ error: 'Assigned property could not be resolved for this admin account' });
+    }
+
     const bookings = await prisma.booking.findMany({
       where: propertyId
         ? {
@@ -143,11 +150,15 @@ const updateBooking = async (req, res) => {
     const { status, paymentStatus, paymentMethod } = req.body;
     const existingBooking = await prisma.booking.findUnique({
       where: { id: req.params.id },
-      select: { id: true, roomId: true, checkIn: true, checkOut: true, status: true, receivedAt: true },
+      select: { id: true, roomId: true, checkIn: true, checkOut: true, status: true, receivedAt: true, room: { select: { propertyId: true } } },
     });
 
     if (!existingBooking) {
       return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    if (req.adminSession?.role === 'property' && existingBooking.room?.propertyId !== req.adminScopedProperty?.id) {
+      return res.status(403).json({ error: 'You do not have access to this property' });
     }
 
     const updateData = {};
