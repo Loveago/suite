@@ -1,4 +1,5 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const ADMIN_PROXY_BASE = '/api/backend-proxy';
 
 const toQueryString = (params?: Record<string, string | number | boolean | undefined>) => {
   if (!params) return '';
@@ -87,6 +88,21 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
   return res.json();
 }
 
+async function fetchAdminAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${ADMIN_PROXY_BASE}${endpoint}`, {
+    ...options,
+    credentials: 'include',
+    headers: {
+      ...(options?.headers || {}),
+    },
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Request failed' }));
+    throw new Error(error.error || 'Request failed');
+  }
+  return res.json();
+}
+
 export const api = {
   properties: {
     getAll: () => fetchAPI<Property[]>('/properties'),
@@ -95,12 +111,12 @@ export const api = {
     getAll: (params?: { propertyId?: string; includeArchived?: boolean }) =>
       fetchAPI<Room[]>(`/rooms${toQueryString(params)}`),
     getById: (id: string) => fetchAPI<Room>(`/rooms/${id}`),
-    create: (data: Partial<Room>) => fetchAPI<Room>('/rooms', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: Partial<Room>) => fetchAPI<Room>(`/rooms/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    delete: (id: string) => fetchAPI<{ message: string }>(`/rooms/${id}`, { method: 'DELETE' }),
+    create: (data: Partial<Room>) => fetchAdminAPI<Room>('/rooms', { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }),
+    update: (id: string, data: Partial<Room>) => fetchAdminAPI<Room>(`/rooms/${id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }),
+    delete: (id: string) => fetchAdminAPI<{ message: string }>(`/rooms/${id}`, { method: 'DELETE' }),
   },
   bookings: {
-    getAll: (params?: { propertyId?: string }) => fetchAPI<Booking[]>(`/bookings${toQueryString(params)}`),
+    getAll: (params?: { propertyId?: string }) => fetchAdminAPI<Booking[]>(`/bookings${toQueryString(params)}`),
     search: (query: string) => fetchAPI<Booking[]>(`/bookings/search${toQueryString({ query })}`),
     create: (data: {
       roomId?: string;
@@ -115,13 +131,13 @@ export const api = {
       paymentMethod?: string;
     }) => fetchAPI<Booking>('/bookings', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: { status?: string; paymentStatus?: string; paymentMethod?: string }) =>
-      fetchAPI<Booking>(`/bookings/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+      fetchAdminAPI<Booking>(`/bookings/${id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }),
   },
   upload: {
     roomImages: async (files: FileList): Promise<{ images: string[] }> => {
       const formData = new FormData();
       Array.from(files).forEach((file) => formData.append('images', file));
-      const res = await fetch(`${API_BASE.replace('/api', '')}/api/upload/room-images`, {
+      const res = await fetch(`${ADMIN_PROXY_BASE}/upload/room-images`, {
         method: 'POST',
         credentials: 'include',
         body: formData,
@@ -132,7 +148,7 @@ export const api = {
     galleryImages: async (files: FileList): Promise<{ images: string[] }> => {
       const formData = new FormData();
       Array.from(files).forEach((file) => formData.append('images', file));
-      const res = await fetch(`${API_BASE.replace('/api', '')}/api/upload/gallery-images`, {
+      const res = await fetch(`${ADMIN_PROXY_BASE}/upload/gallery-images`, {
         method: 'POST',
         credentials: 'include',
         body: formData,
@@ -144,10 +160,10 @@ export const api = {
   gallery: {
     getAll: (params?: { propertyId?: string; includeArchived?: boolean }) => fetchAPI<GalleryImage[]>(`/gallery${toQueryString(params)}`),
     create: (data: { url: string; caption?: string; order?: number; propertyId: string }) =>
-      fetchAPI<GalleryImage>('/gallery', { method: 'POST', body: JSON.stringify(data) }),
+      fetchAdminAPI<GalleryImage>('/gallery', { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }),
     update: (id: string, data: { url?: string; caption?: string; order?: number; propertyId?: string }) =>
-      fetchAPI<GalleryImage>(`/gallery/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    delete: (id: string) => fetchAPI<{ message: string }>(`/gallery/${id}`, { method: 'DELETE' }),
+      fetchAdminAPI<GalleryImage>(`/gallery/${id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }),
+    delete: (id: string) => fetchAdminAPI<{ message: string }>(`/gallery/${id}`, { method: 'DELETE' }),
   },
 };
 

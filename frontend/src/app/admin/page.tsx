@@ -246,11 +246,27 @@ export default function AdminPage() {
     }
 
     try {
-      const [roomsData, bookingsData, galleryData] = await Promise.all([
-        api.rooms.getAll({ propertyId: selectedPropertyId }).catch(() => []),
-        api.bookings.getAll({ propertyId: selectedPropertyId }).catch(() => []),
-        api.gallery.getAll({ propertyId: selectedPropertyId }).catch(() => []),
+      setError('');
+
+      const [roomsResult, bookingsResult, galleryResult] = await Promise.allSettled([
+        api.rooms.getAll({ propertyId: selectedPropertyId }),
+        api.bookings.getAll({ propertyId: selectedPropertyId }),
+        api.gallery.getAll({ propertyId: selectedPropertyId }),
       ]);
+
+      const roomsData = roomsResult.status === 'fulfilled' ? roomsResult.value : [];
+      const bookingsData = bookingsResult.status === 'fulfilled' ? bookingsResult.value : [];
+      const galleryData = galleryResult.status === 'fulfilled' ? galleryResult.value : [];
+
+      const failedSources = [
+        roomsResult.status === 'rejected' ? 'rooms' : null,
+        bookingsResult.status === 'rejected' ? 'bookings' : null,
+        galleryResult.status === 'rejected' ? 'gallery' : null,
+      ].filter(Boolean);
+
+      if (failedSources.length > 0) {
+        setError(`Failed to load ${failedSources.join(', ')}.`);
+      }
 
       const sortedBookings = [...bookingsData].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
