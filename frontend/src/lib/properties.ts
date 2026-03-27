@@ -24,10 +24,10 @@ export const propertyOptions: PropertyOption[] = [
   },
   {
     key: 'accra',
-    slug: 'american-house-accra',
-    name: 'American House',
+    slug: 'kingstel-escape-accra',
+    name: 'Kingstel Escape',
     city: 'Accra',
-    label: 'American House at Accra',
+    label: 'Kingstel Escape at Accra',
     shortLabel: 'Accra',
     description: 'A refined city stay experience in Accra with modern comfort and premium finishes.',
     fallbackPropertyId: 'accra-property',

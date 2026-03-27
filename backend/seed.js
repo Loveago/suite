@@ -15,8 +15,8 @@ async function main() {
       ],
     },
     {
-      name: 'American House',
-      slug: 'american-house-accra',
+      name: 'Kingstel Escape',
+      slug: 'kingstel-escape-accra',
       city: 'Accra',
       description: 'An elevated city property in Accra blending polished interiors, calm comfort, and premium hospitality.',
       galleryImages: [
@@ -50,7 +50,7 @@ async function main() {
         'https://images.unsplash.com/photo-1505692952047-1a78307da8f2?auto=format&fit=crop&w=1200&q=80',
       ],
     },
-    'american-house-accra': {
+    'kingstel-escape-accra': {
       Small: [
         'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=1200&q=80',
         'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80',
@@ -81,11 +81,11 @@ async function main() {
       Large: 'A generous Tema luxury room offering expanded living space, premium interiors, and a more indulgent stay experience.',
       VIP: 'Our most exclusive Tema category, crafted for guests who want superior privacy, prestige, and a truly elevated experience.',
     },
-    'american-house-accra': {
+    'kingstel-escape-accra': {
       Small: 'A sleek Accra city room with warm textures, efficient comfort, and luxury essentials designed for short premium stays.',
-      Medium: 'A refined American House room with added space, polished furnishings, and a calm urban atmosphere in Accra.',
+      Medium: 'A refined Kingstel Escape room with added space, polished furnishings, and a calm urban atmosphere in Accra.',
       Large: 'A spacious Accra stay with expanded comfort, upscale finishes, and a modern hospitality feel for longer city visits.',
-      VIP: 'The signature American House experience in Accra, pairing standout comfort, premium styling, and elevated privacy.',
+      VIP: 'The signature Kingstel Escape experience in Accra, pairing standout comfort, premium styling, and elevated privacy.',
     },
   };
 
@@ -109,7 +109,7 @@ async function main() {
       { category: 'Small', roomNumber: 'K16', price: 800 },
       { category: 'Large', roomNumber: 'K17', price: 1300 },
     ],
-    'american-house-accra': [
+    'kingstel-escape-accra': [
       { category: 'Small', roomNumber: 'A01', price: 900 },
       { category: 'Small', roomNumber: 'A02', price: 900 },
       { category: 'Medium', roomNumber: 'A03', price: 1200 },
@@ -133,6 +133,8 @@ async function main() {
             name:
               propertySeed.slug === 'the-suite-tema'
                 ? 'THE SUITE'
+                : propertySeed.slug === 'kingstel-escape-accra'
+                ? 'American House'
                 : propertySeed.name,
           },
         ],

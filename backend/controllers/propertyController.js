@@ -10,11 +10,12 @@ const getAllProperties = async (_req, res) => {
     const normalizedProperties = properties
       .map((property) => {
         const normalizedName = property.name?.trim().toLowerCase();
-        const isAccraProperty = normalizedName === 'american house';
+        const isAccraProperty = normalizedName === 'american house' || normalizedName === 'kingstel escape';
 
         return {
           ...property,
-          slug: property.slug || (isAccraProperty ? 'american-house-accra' : 'the-suite-tema'),
+          name: isAccraProperty ? 'Kingstel Escape' : property.name,
+          slug: property.slug || (isAccraProperty ? 'kingstel-escape-accra' : 'the-suite-tema'),
           city: property.city || (isAccraProperty ? 'Accra' : 'Tema'),
         };
       })

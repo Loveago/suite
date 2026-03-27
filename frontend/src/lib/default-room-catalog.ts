@@ -13,8 +13,8 @@ export const defaultProperties: Property[] = [
   },
   {
     id: 'accra-property',
-    name: 'American House',
-    slug: 'american-house-accra',
+    name: 'Kingstel Escape',
+    slug: 'kingstel-escape-accra',
     city: 'Accra',
     description: 'An elevated city property in Accra blending polished interiors, calm comfort, and premium hospitality.',
     createdAt: new Date(2026, 0, 2).toISOString(),
@@ -44,7 +44,7 @@ const categoryImagesByProperty: Record<string, Record<string, string[]>> = {
       'https://images.unsplash.com/photo-1505692952047-1a78307da8f2?auto=format&fit=crop&w=1200&q=80',
     ],
   },
-  'american-house-accra': {
+  'kingstel-escape-accra': {
     Small: [
       'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80',
@@ -75,11 +75,11 @@ const categoryDescriptionsByProperty: Record<string, Record<string, string>> = {
     Large: 'A generous Tema luxury room offering expanded living space, premium interiors, and a more indulgent stay experience.',
     VIP: 'Our most exclusive Tema category, crafted for guests who want superior privacy, prestige, and a truly elevated experience.',
   },
-  'american-house-accra': {
+  'kingstel-escape-accra': {
     Small: 'A sleek Accra city room with warm textures, efficient comfort, and luxury essentials designed for short premium stays.',
-    Medium: 'A refined American House room with added space, polished furnishings, and a calm urban atmosphere in Accra.',
+    Medium: 'A refined Kingstel Escape room with added space, polished furnishings, and a calm urban atmosphere in Accra.',
     Large: 'A spacious Accra stay with expanded comfort, upscale finishes, and a modern hospitality feel for longer city visits.',
-    VIP: 'The signature American House experience in Accra, pairing standout comfort, premium styling, and elevated privacy.',
+    VIP: 'The signature Kingstel Escape experience in Accra, pairing standout comfort, premium styling, and elevated privacy.',
   },
 };
 
@@ -101,14 +101,14 @@ const roomCatalog = [
   { propertySlug: 'the-suite-tema', category: 'Large', roomNumber: 'K15', price: 1300 },
   { propertySlug: 'the-suite-tema', category: 'Small', roomNumber: 'K16', price: 800 },
   { propertySlug: 'the-suite-tema', category: 'Large', roomNumber: 'K17', price: 1300 },
-  { propertySlug: 'american-house-accra', category: 'Small', roomNumber: 'A01', price: 900 },
-  { propertySlug: 'american-house-accra', category: 'Small', roomNumber: 'A02', price: 900 },
-  { propertySlug: 'american-house-accra', category: 'Medium', roomNumber: 'A03', price: 1200 },
-  { propertySlug: 'american-house-accra', category: 'Medium', roomNumber: 'A04', price: 1200 },
-  { propertySlug: 'american-house-accra', category: 'Large', roomNumber: 'A05', price: 1450 },
-  { propertySlug: 'american-house-accra', category: 'Large', roomNumber: 'A06', price: 1450 },
-  { propertySlug: 'american-house-accra', category: 'VIP', roomNumber: 'A07', price: 1700 },
-  { propertySlug: 'american-house-accra', category: 'VIP', roomNumber: 'A08', price: 1700 },
+  { propertySlug: 'kingstel-escape-accra', category: 'Small', roomNumber: 'A01', price: 900 },
+  { propertySlug: 'kingstel-escape-accra', category: 'Small', roomNumber: 'A02', price: 900 },
+  { propertySlug: 'kingstel-escape-accra', category: 'Medium', roomNumber: 'A03', price: 1200 },
+  { propertySlug: 'kingstel-escape-accra', category: 'Medium', roomNumber: 'A04', price: 1200 },
+  { propertySlug: 'kingstel-escape-accra', category: 'Large', roomNumber: 'A05', price: 1450 },
+  { propertySlug: 'kingstel-escape-accra', category: 'Large', roomNumber: 'A06', price: 1450 },
+  { propertySlug: 'kingstel-escape-accra', category: 'VIP', roomNumber: 'A07', price: 1700 },
+  { propertySlug: 'kingstel-escape-accra', category: 'VIP', roomNumber: 'A08', price: 1700 },
 ] as const;
 
 export const defaultRooms: Room[] = roomCatalog.map((room, index) => {
@@ -144,7 +144,7 @@ export const fallbackGalleryImagesByProperty: Record<string, string[]> = {
     'https://images.unsplash.com/photo-1591088398332-8a7791972843?w=1200&q=80',
     'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1200&q=80',
   ],
-  'american-house-accra': [
+  'kingstel-escape-accra': [
     'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200&q=80',
     'https://images.unsplash.com/photo-1616594039964-58e5f4f7b7dd?w=1200&q=80',
     'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?w=1200&q=80',
