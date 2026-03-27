@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { Camera, X } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
-import { api, GalleryImage, Property } from '@/lib/api';
+import { api, GalleryImage, Property, getImageUrl } from '@/lib/api';
 import { defaultProperties, fallbackGalleryImagesByProperty } from '@/lib/default-room-catalog';
 
 interface GallerySection {
@@ -41,7 +41,7 @@ export default function GalleryPage() {
           .filter((image) => image.propertyId === property.id)
           .map((image) => ({
             id: image.id,
-            url: image.url,
+            url: getImageUrl(image.url),
             caption: image.caption,
           }));
 

@@ -68,14 +68,16 @@ export default function AdminPage() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [newGalleryUrl, setNewGalleryUrl] = useState('');
   const [newGalleryCaption, setNewGalleryCaption] = useState('');
+  const [galleryUploading, setGalleryUploading] = useState(false);
+  const [newGalleryImages, setNewGalleryImages] = useState<string[]>([]);
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const [expandedBookings, setExpandedBookings] = useState<Record<string, boolean>>({});
   const [newBookingNotice, setNewBookingNotice] = useState<{ count: number; latestGuest: string } | null>(null);
   const [unseenBookingCount, setUnseenBookingCount] = useState(0);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryFileInputRef = useRef<HTMLInputElement>(null);
   const latestBookingIdsRef = useRef<string[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
 
@@ -286,6 +288,18 @@ export default function AdminPage() {
     }
   };
 
+  const handleGalleryUpload = async (files: FileList) => {
+    setGalleryUploading(true);
+    try {
+      const result = await api.upload.galleryImages(files);
+      setNewGalleryImages((prev) => [...prev, ...result.images]);
+    } catch {
+      setError('Failed to upload gallery images');
+    } finally {
+      setGalleryUploading(false);
+    }
+  };
+
   const handleImageUpload = async (files: FileList) => {
     setUploading(true);
     try {
@@ -412,20 +426,29 @@ export default function AdminPage() {
   };
 
   const handleAddGalleryImage = async () => {
-    if (!newGalleryUrl.trim() || !selectedPropertyId) return;
+    if (newGalleryImages.length === 0 || !selectedPropertyId) return;
     try {
-      await api.gallery.create({
-        url: newGalleryUrl,
-        caption: newGalleryCaption || undefined,
-        order: galleryImages.length,
-        propertyId: selectedPropertyId,
-      });
-      setNewGalleryUrl('');
+      await Promise.all(
+        newGalleryImages.map((url, index) =>
+          api.gallery.create({
+            url,
+            caption: newGalleryCaption || undefined,
+            order: galleryImages.length + index,
+            propertyId: selectedPropertyId,
+          })
+        )
+      );
+
       setNewGalleryCaption('');
+      setNewGalleryImages([]);
       loadData();
     } catch {
       setError('Failed to add gallery image');
     }
+  };
+
+  const removePendingGalleryImage = (index: number) => {
+    setNewGalleryImages((prev) => prev.filter((_, imageIndex) => imageIndex !== index));
   };
 
   const handleDeleteGalleryImage = async (id: string) => {
@@ -1044,16 +1067,6 @@ export default function AdminPage() {
                 <h3 className="text-white font-semibold mb-4">Add New Image</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-gray-400 text-sm mb-2">Image URL *</label>
-                    <input
-                      type="text"
-                      value={newGalleryUrl}
-                      onChange={(e) => setNewGalleryUrl(e.target.value)}
-                      placeholder="https://images.unsplash.com/..."
-                      className="w-full bg-dark border border-dark-border rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gold"
-                    />
-                  </div>
-                  <div>
                     <label className="block text-gray-400 text-sm mb-2">Caption (Optional)</label>
                     <input
                       type="text"
@@ -1063,14 +1076,57 @@ export default function AdminPage() {
                       className="w-full bg-dark border border-dark-border rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gold"
                     />
                   </div>
+                  {newGalleryImages.length > 0 && (
+                    <div className="flex flex-wrap gap-3">
+                      {newGalleryImages.map((image, index) => (
+                        <div key={`${image}-${index}`} className="relative w-24 h-24 rounded-lg overflow-hidden group border border-dark-border bg-dark">
+                          <div
+                            className="w-full h-full bg-cover bg-center"
+                            style={{ backgroundImage: `url(${getImageUrl(image)})` }}
+                          />
+                          <button
+                            onClick={() => removePendingGalleryImage(index)}
+                            className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={16} className="text-white" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <input
+                    ref={galleryFileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => e.target.files && handleGalleryUpload(e.target.files)}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => galleryFileInputRef.current?.click()}
+                    disabled={galleryUploading}
+                    className="w-full border-2 border-dashed border-dark-border hover:border-gold rounded-lg py-4 flex items-center justify-center gap-2 text-gray-400 hover:text-gold transition-colors text-sm disabled:opacity-60"
+                  >
+                    {galleryUploading ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                        className="w-4 h-4 border-2 border-gold border-t-transparent rounded-full"
+                      />
+                    ) : (
+                      <Upload size={16} />
+                    )}
+                    {galleryUploading ? 'Uploading...' : 'Upload Gallery Images'}
+                  </button>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleAddGalleryImage}
+                    disabled={newGalleryImages.length === 0 || galleryUploading}
                     className="flex items-center gap-2 bg-gold hover:bg-gold-light text-dark font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
                   >
                     <Plus size={16} />
-                    Add Image
+                    Save to Gallery
                   </motion.button>
                 </div>
               </div>
@@ -1098,7 +1154,7 @@ export default function AdminPage() {
                     >
                       <div
                         className="absolute inset-0 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${image.url})` }}
+                        style={{ backgroundImage: `url(${getImageUrl(image.url)})` }}
                       />
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <motion.button

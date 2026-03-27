@@ -128,6 +128,17 @@ export const api = {
       if (!res.ok) throw new Error('Upload failed');
       return res.json();
     },
+    galleryImages: async (files: FileList): Promise<{ images: string[] }> => {
+      const formData = new FormData();
+      Array.from(files).forEach((file) => formData.append('images', file));
+      const res = await fetch(`${API_BASE.replace('/api', '')}/api/upload/gallery-images`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      return res.json();
+    },
   },
   gallery: {
     getAll: (params?: { propertyId?: string; includeArchived?: boolean }) => fetchAPI<GalleryImage[]>(`/gallery${toQueryString(params)}`),
