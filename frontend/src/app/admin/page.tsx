@@ -394,8 +394,10 @@ export default function AdminPage() {
     try {
       await api.rooms.delete(id);
       loadData();
-    } catch {
-      alert('Failed to delete room');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete room';
+      setError(message);
+      alert(message);
     }
   };
 
@@ -403,8 +405,10 @@ export default function AdminPage() {
     try {
       await api.rooms.update(room.id, { isBooked: !room.isBooked });
       loadData();
-    } catch {
-      alert('Failed to update room occupancy');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update room occupancy';
+      setError(message);
+      alert(message);
     }
   };
 
@@ -415,8 +419,10 @@ export default function AdminPage() {
         ...(status === 'received' ? { paymentStatus: 'paid' } : {}),
       });
       loadData();
-    } catch {
-      alert('Failed to update booking');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update booking';
+      setError(message);
+      alert(message);
     }
   };
 
