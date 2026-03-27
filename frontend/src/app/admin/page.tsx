@@ -23,6 +23,14 @@ import { useRouter } from 'next/navigation';
 
 type Tab = 'rooms' | 'bookings' | 'gallery';
 
+interface AdminSessionData {
+  id: string;
+  username: string;
+  role: 'master' | 'property';
+  propertySlug?: string;
+  displayName: string;
+}
+
 interface RoomForm {
   name: string;
   category: string;
@@ -46,6 +54,8 @@ const emptyRoomForm: RoomForm = {
 export default function AdminPage() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('rooms');
+  const [adminSession, setAdminSession] = useState<AdminSessionData | null>(null);
+  const [authResolved, setAuthResolved] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
@@ -70,10 +80,40 @@ export default function AdminPage() {
   const audioContextRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
-    api.properties
-      .getAll()
-      .then((data) => setProperties(data.length > 0 ? data : defaultProperties))
-      .catch(() => setProperties(defaultProperties));
+    const loadAdminContext = async () => {
+      try {
+        const [propertiesData, statusResponse] = await Promise.all([
+          api.properties.getAll().catch(() => defaultProperties),
+          fetch('/api/admin/status').catch(() => null),
+        ]);
+
+        const normalizedProperties = propertiesData.length > 0 ? propertiesData : defaultProperties;
+        const statusData = statusResponse
+          ? await statusResponse.json().catch(() => ({ authenticated: false, session: null }))
+          : { authenticated: false, session: null };
+        const session = statusData.authenticated ? (statusData.session as AdminSessionData | null) : null;
+        const scopedProperties =
+          session?.role === 'property' && session.propertySlug
+            ? normalizedProperties.filter((property) => property.slug === session.propertySlug)
+            : normalizedProperties;
+
+        setAdminSession(session);
+        setProperties(scopedProperties.length > 0 ? scopedProperties : normalizedProperties);
+
+        if (session?.role === 'property' && session.propertySlug) {
+          const allowedProperty = normalizedProperties.find((property) => property.slug === session.propertySlug);
+
+          if (allowedProperty) {
+            latestBookingIdsRef.current = [];
+            setSelectedPropertyId(allowedProperty.id);
+          }
+        }
+      } finally {
+        setAuthResolved(true);
+      }
+    };
+
+    loadAdminContext();
   }, []);
 
   useEffect(() => {
@@ -435,8 +475,14 @@ export default function AdminPage() {
     }));
   const latestBooking = bookings[0] || null;
   const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || null;
+  const isMasterAdmin = adminSession?.role !== 'property';
+  const isPropertyScopedAdmin = adminSession?.role === 'property';
 
   const chooseProperty = (propertyId: string) => {
+    if (!isMasterAdmin && propertyId !== selectedPropertyId) {
+      return;
+    }
+
     latestBookingIdsRef.current = [];
     setSelectedPropertyId(propertyId);
     setUnseenBookingCount(0);
@@ -473,11 +519,18 @@ export default function AdminPage() {
               <p className="text-gray-400 text-sm">
                 {selectedProperty
                   ? `Managing ${selectedProperty.name} in ${selectedProperty.city}`
+                  : isPropertyScopedAdmin
+                  ? 'Loading your property dashboard.'
                   : 'Choose a property to manage rooms, bookings, prices, and gallery separately.'}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              {selectedProperty && (
+              {adminSession && (
+                <span className="inline-flex items-center rounded-full border border-gold/20 bg-gold/10 px-4 py-2 text-xs uppercase tracking-[0.18em] text-gold">
+                  {adminSession.displayName}
+                </span>
+              )}
+              {isMasterAdmin && selectedProperty && (
                 <button
                   onClick={() => chooseProperty('')}
                   className="inline-flex items-center justify-center gap-2 border border-dark-border bg-dark-card hover:border-gold/40 hover:text-gold text-gray-300 px-4 py-2.5 rounded-xl text-sm transition-colors"
@@ -498,7 +551,7 @@ export default function AdminPage() {
           </div>
         </motion.div>
 
-        {!selectedProperty && (
+        {!selectedProperty && authResolved && isMasterAdmin && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -525,6 +578,12 @@ export default function AdminPage() {
               </motion.button>
             ))}
           </motion.div>
+        )}
+
+        {!selectedProperty && authResolved && isPropertyScopedAdmin && (
+          <div className="rounded-2xl border border-dark-border bg-dark-card px-6 py-10 text-center text-sm text-gray-400">
+            Your account is restricted to a single property dashboard. If this property is unavailable, contact the master admin.
+          </div>
         )}
 
         {selectedProperty && (

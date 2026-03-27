@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ShieldCheck, Lock, Mail } from 'lucide-react';
+import { ShieldCheck, Lock, User } from 'lucide-react';
 import { FormEvent, Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PageTransition from '@/components/PageTransition';
@@ -9,7 +9,7 @@ import PageTransition from '@/components/PageTransition';
 function AdminLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -23,7 +23,7 @@ function AdminLoginContent() {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ identifier, password }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -62,7 +62,7 @@ function AdminLoginContent() {
               Control Panel Login
             </h1>
             <p className="text-gray-400 text-sm sm:text-base text-center">
-              Sign in with your admin email and password to access the dashboard.
+              Sign in with your master admin email or receptionist username and password to access the dashboard.
             </p>
           </motion.div>
 
@@ -74,16 +74,16 @@ function AdminLoginContent() {
             className="bg-dark-card border border-dark-border rounded-2xl p-6 sm:p-8 space-y-5"
           >
             <div>
-              <label className="block text-xs text-gray-400 tracking-[0.18em] uppercase mb-2">Email</label>
+              <label className="block text-xs text-gray-400 tracking-[0.18em] uppercase mb-2">Email or Username</label>
               <div className="relative">
-                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gold/70" />
+                <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gold/70" />
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   className="w-full bg-dark border border-dark-border rounded-xl pl-11 pr-4 py-3 text-white focus:outline-none focus:border-gold transition-colors"
-                  placeholder="admin@thesuite.com"
-                  autoComplete="email"
+                  placeholder="admin@thesuite.com or suite.reception"
+                  autoComplete="username"
                   required
                 />
               </div>
