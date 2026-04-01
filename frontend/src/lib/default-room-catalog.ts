@@ -43,6 +43,23 @@ export const defaultProperties: Property[] = [
   },
 ];
 
+export const resolvePropertyFromCollection = (properties: Property[], propertyIdOrSlug?: string) => {
+  if (!propertyIdOrSlug) {
+    return properties[0] || defaultProperties[0];
+  }
+
+  return (
+    properties.find((property) => property.id === propertyIdOrSlug)
+    || properties.find((property) => property.slug === propertyIdOrSlug)
+    || defaultProperties.find((property) => property.id === propertyIdOrSlug)
+    || defaultProperties.find((property) => property.slug === propertyIdOrSlug)
+    || defaultProperties[0]
+  );
+};
+
+export const resolvePropertySlug = (propertyIdOrSlug?: string, properties: Property[] = defaultProperties) =>
+  resolvePropertyFromCollection(properties, propertyIdOrSlug)?.slug || defaultProperties[0].slug;
+
 const categoryImagesByProperty: Record<string, Record<string, string[]>> = {
   'the-suite-tema': {
     Small: [
@@ -178,5 +195,12 @@ export const fallbackGalleryImagesByProperty: Record<string, string[]> = {
   ],
 };
 
-export const getDefaultRoomsForProperty = (propertyId?: string) =>
-  propertyId ? defaultRooms.filter((room) => room.propertyId === propertyId) : defaultRooms;
+export const getDefaultRoomsForProperty = (propertyIdOrSlug?: string, properties: Property[] = defaultProperties) => {
+  if (!propertyIdOrSlug) {
+    return defaultRooms;
+  }
+
+  const propertySlug = resolvePropertySlug(propertyIdOrSlug, properties);
+
+  return defaultRooms.filter((room) => room.property?.slug === propertySlug);
+};

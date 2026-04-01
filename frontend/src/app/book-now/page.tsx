@@ -6,7 +6,7 @@ import { Calendar, User, Check, BedDouble, ChevronRight, ChevronLeft, Sparkles }
 import PageTransition from '@/components/PageTransition';
 import PriceWithUsd from '@/components/PriceWithUsd';
 import { api, Property, Room, formatCurrency } from '@/lib/api';
-import { defaultProperties, getAllowedCategoriesForProperty, getCategoryOrderForProperty, getDefaultRoomsForProperty } from '@/lib/default-room-catalog';
+import { defaultProperties, getAllowedCategoriesForProperty, getCategoryOrderForProperty, getDefaultRoomsForProperty, resolvePropertyFromCollection } from '@/lib/default-room-catalog';
 import { useRouter } from 'next/navigation';
 
 const STEPS = [
@@ -57,15 +57,16 @@ export default function BookNowPage() {
   useEffect(() => {
     api.rooms
       .getAll({ propertyId: selectedPropertyId })
-      .then((data) => setRooms(data.length ? data : getDefaultRoomsForProperty(selectedPropertyId)))
-      .catch(() => setRooms(getDefaultRoomsForProperty(selectedPropertyId)));
-  }, [selectedPropertyId]);
+      .then((data) => setRooms(data.length ? data : getDefaultRoomsForProperty(selectedPropertyId, properties)))
+      .catch(() => setRooms(getDefaultRoomsForProperty(selectedPropertyId, properties)));
+  }, [selectedPropertyId, properties]);
 
   useEffect(() => {
     setSelectedCategory('');
   }, [selectedPropertyId]);
 
-  const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || defaultProperties[0];
+  const selectedProperty = resolvePropertyFromCollection(properties, selectedPropertyId);
+  const bookingPropertyId = properties.find((property) => property.slug === selectedProperty.slug)?.id || selectedProperty.id;
   const allowedCategories = getAllowedCategoriesForProperty(selectedProperty.slug);
   const visibleRooms = rooms.filter((room) => allowedCategories.includes(room.category));
   const categories = getCategoryOrderForProperty(selectedProperty.slug, visibleRooms.map((room) => room.category));
@@ -107,7 +108,7 @@ export default function BookNowPage() {
     try {
       await api.bookings.create({
         roomCategory: selectedCategory,
-        propertyId: selectedPropertyId,
+        propertyId: bookingPropertyId,
         checkIn,
         checkOut,
         guestName: `${firstName} ${lastName}`,
@@ -116,8 +117,8 @@ export default function BookNowPage() {
         guests: numGuests,
       });
       router.push('/bookings');
-    } catch {
-      setError('Failed to create booking. Please try again.');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to create booking. Please try again.');
       setSubmitting(false);
     }
   };
