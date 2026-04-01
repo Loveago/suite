@@ -111,7 +111,7 @@ const createBooking = async (req, res) => {
         paymentMethod: selectedPaymentMethod,
         paymentStatus: selectedPaymentMethod === 'cash_on_arrival' ? 'pending' : 'unpaid',
       },
-      include: { room: true },
+      include: { room: { include: { property: true } } },
     });
 
     await syncRoomBookedStatus(room.id);
