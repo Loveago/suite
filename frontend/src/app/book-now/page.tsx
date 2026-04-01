@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Calendar, User, Check, BedDouble, ChevronRight, ChevronLeft, Sparkles } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
 import PriceWithUsd from '@/components/PriceWithUsd';
-import { api, Property, Room, formatCurrency } from '@/lib/api';
+import { api, defaultSiteSettings, Property, Room, SiteSettings, formatCurrency, getImageUrl } from '@/lib/api';
 import { defaultProperties, getAllowedCategoriesForProperty, getCategoryOrderForProperty, getDefaultRoomsForProperty, resolvePropertyFromCollection } from '@/lib/default-room-catalog';
 import { useRouter } from 'next/navigation';
 
@@ -32,8 +32,10 @@ export default function BookNowPage() {
   const router = useRouter();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [properties, setProperties] = useState<Property[]>(defaultProperties);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState(1);
+  const [backgroundIndex, setBackgroundIndex] = useState(0);
 
   const [selectedPropertyId, setSelectedPropertyId] = useState(defaultProperties[0].id);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -52,6 +54,7 @@ export default function BookNowPage() {
 
   useEffect(() => {
     api.properties.getAll().then((data) => setProperties(data.length ? data : defaultProperties)).catch(() => setProperties(defaultProperties));
+    api.siteSettings.get().then(setSiteSettings).catch(() => setSiteSettings(defaultSiteSettings));
   }, []);
 
   useEffect(() => {
@@ -65,8 +68,23 @@ export default function BookNowPage() {
     setSelectedCategory('');
   }, [selectedPropertyId]);
 
+  useEffect(() => {
+    const backgroundImages = siteSettings.images.bookNowBackgroundImages.length > 0
+      ? siteSettings.images.bookNowBackgroundImages
+      : defaultSiteSettings.images.bookNowBackgroundImages;
+
+    const interval = setInterval(() => {
+      setBackgroundIndex((prev) => (prev + 1) % backgroundImages.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [siteSettings.images.bookNowBackgroundImages]);
+
   const selectedProperty = resolvePropertyFromCollection(properties, selectedPropertyId);
   const bookingPropertyId = properties.find((property) => property.slug === selectedProperty.slug)?.id || selectedProperty.id;
+  const backgroundImages = siteSettings.images.bookNowBackgroundImages.length > 0
+    ? siteSettings.images.bookNowBackgroundImages
+    : defaultSiteSettings.images.bookNowBackgroundImages;
   const allowedCategories = getAllowedCategoriesForProperty(selectedProperty.slug);
   const visibleRooms = rooms.filter((room) => allowedCategories.includes(room.category));
   const categories = getCategoryOrderForProperty(selectedProperty.slug, visibleRooms.map((room) => room.category));
@@ -129,6 +147,21 @@ export default function BookNowPage() {
   return (
     <PageTransition>
       <div className="min-h-screen bg-dark relative overflow-hidden">
+        {backgroundImages.map((image, index) => (
+          <motion.div
+            key={`${image}-${index}`}
+            className="absolute inset-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: backgroundIndex === index ? 1 : 0 }}
+            transition={{ duration: 1.2, ease: 'easeInOut' }}
+          >
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${image.startsWith('http') ? image : getImageUrl(image)})` }}
+            />
+          </motion.div>
+        ))}
+        <div className="absolute inset-0 bg-black/72" />
         {/* Ambient glow */}
         <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gold/6 rounded-full blur-3xl" />
         <div className="pointer-events-none absolute bottom-0 right-0 w-[400px] h-[400px] bg-gold/3 rounded-full blur-3xl" />

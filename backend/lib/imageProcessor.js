@@ -17,6 +17,12 @@ const IMAGE_SPECS = {
     width: 1800,
     height: 1350,
   },
+  site: {
+    directory: path.join(UPLOAD_ROOT, 'site'),
+    publicPath: '/uploads/site',
+    width: 1920,
+    height: 1280,
+  },
 };
 
 const ensureDirectory = async (directoryPath) => {

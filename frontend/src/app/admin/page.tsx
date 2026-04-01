@@ -17,11 +17,11 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
-import { api, Room, Booking, GalleryImage, Property, formatCurrency, getImageUrl } from '@/lib/api';
+import { api, defaultSiteSettings, Room, Booking, GalleryImage, Property, SiteSettings, formatCurrency, getImageUrl } from '@/lib/api';
 import { defaultProperties, getAllowedCategoriesForProperty, getCategoryOrderForProperty } from '@/lib/default-room-catalog';
 import { useRouter } from 'next/navigation';
 
-type Tab = 'rooms' | 'bookings' | 'gallery';
+type Tab = 'rooms' | 'bookings' | 'gallery' | 'settings';
 
 interface AdminSessionData {
   id: string;
@@ -52,6 +52,7 @@ const emptyRoomForm: RoomForm = {
 };
 
 const toRoomTypeLabel = (category: string) => (/room|bedroom/i.test(category) ? category : `${category} Room`);
+const getPreviewImageUrl = (image: string) => (image.startsWith('http') ? image : getImageUrl(image));
 
 export default function AdminPage() {
   const router = useRouter();
@@ -62,6 +63,7 @@ export default function AdminPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [properties, setProperties] = useState<Property[]>(defaultProperties);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [selectedPropertyId, setSelectedPropertyId] = useState('');
   const [loading, setLoading] = useState(true);
   const [showRoomModal, setShowRoomModal] = useState(false);
@@ -73,6 +75,7 @@ export default function AdminPage() {
   const [newGalleryCaption, setNewGalleryCaption] = useState('');
   const [galleryUploading, setGalleryUploading] = useState(false);
   const [newGalleryImages, setNewGalleryImages] = useState<string[]>([]);
+  const [siteUploading, setSiteUploading] = useState(false);
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const [expandedBookings, setExpandedBookings] = useState<Record<string, boolean>>({});
   const [newBookingNotice, setNewBookingNotice] = useState<{ count: number; latestGuest: string } | null>(null);
@@ -80,14 +83,18 @@ export default function AdminPage() {
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryFileInputRef = useRef<HTMLInputElement>(null);
+  const homeHeroImagesInputRef = useRef<HTMLInputElement>(null);
+  const homeLuxuryCtaInputRef = useRef<HTMLInputElement>(null);
+  const bookNowBackgroundImagesInputRef = useRef<HTMLInputElement>(null);
   const latestBookingIdsRef = useRef<string[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     const loadAdminContext = async () => {
       try {
-        const [propertiesData, statusResponse] = await Promise.all([
+        const [propertiesData, siteSettingsData, statusResponse] = await Promise.all([
           api.properties.getAll().catch(() => defaultProperties),
+          api.siteSettings.get().catch(() => defaultSiteSettings),
           fetch('/api/admin/status').catch(() => null),
         ]);
 
@@ -109,6 +116,7 @@ export default function AdminPage() {
 
         setAdminSession(session);
         setProperties(scopedProperties.length > 0 ? scopedProperties : mergedProperties);
+        setSiteSettings(siteSettingsData);
 
         if (session?.role === 'property' && session.propertySlug) {
           const allowedProperty = mergedProperties.find((property) => property.slug === session.propertySlug);
@@ -487,6 +495,90 @@ export default function AdminPage() {
     setNewGalleryImages((prev) => prev.filter((_, imageIndex) => imageIndex !== index));
   };
 
+  const updateSiteSettingsGeneral = (field: keyof SiteSettings['general'], value: string) => {
+    setSiteSettings((prev) => ({
+      ...prev,
+      general: {
+        ...prev.general,
+        [field]: value,
+      },
+    }));
+  };
+
+  const replaceSiteSettingImages = (field: 'homeHeroImages' | 'bookNowBackgroundImages', images: string[]) => {
+    setSiteSettings((prev) => ({
+      ...prev,
+      images: {
+        ...prev.images,
+        [field]: images,
+      },
+    }));
+  };
+
+  const appendSiteSettingImages = (field: 'homeHeroImages' | 'bookNowBackgroundImages', images: string[]) => {
+    setSiteSettings((prev) => ({
+      ...prev,
+      images: {
+        ...prev.images,
+        [field]: [...prev.images[field], ...images],
+      },
+    }));
+  };
+
+  const removeSiteSettingImage = (field: 'homeHeroImages' | 'bookNowBackgroundImages', index: number) => {
+    setSiteSettings((prev) => ({
+      ...prev,
+      images: {
+        ...prev.images,
+        [field]: prev.images[field].filter((_, imageIndex) => imageIndex !== index),
+      },
+    }));
+  };
+
+  const handleSiteImageUpload = async (field: 'homeHeroImages' | 'bookNowBackgroundImages' | 'homeLuxuryCtaImage', files: FileList) => {
+    setSiteUploading(true);
+    setError('');
+
+    try {
+      const result = await api.upload.siteImages(files);
+
+      if (field === 'homeLuxuryCtaImage') {
+        const nextImage = result.images[0];
+
+        if (nextImage) {
+          setSiteSettings((prev) => ({
+            ...prev,
+            images: {
+              ...prev.images,
+              homeLuxuryCtaImage: nextImage,
+            },
+          }));
+        }
+      } else {
+        appendSiteSettingImages(field, result.images);
+      }
+    } catch {
+      setError('Failed to upload site images');
+    } finally {
+      setSiteUploading(false);
+    }
+  };
+
+  const handleSaveSiteSettings = async () => {
+    setSaving(true);
+    setError('');
+
+    try {
+      const saved = await api.siteSettings.update(siteSettings);
+      setSiteSettings(saved);
+    } catch (saveError) {
+      const message = saveError instanceof Error ? saveError.message : 'Failed to save site settings';
+      setError(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleDeleteGalleryImage = async (id: string) => {
     if (!confirm('Delete this gallery image?')) return;
     try {
@@ -735,7 +827,7 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-dark-card border border-dark-border rounded-xl p-1 w-fit">
-          {(['rooms', 'bookings', 'gallery'] as Tab[]).map((t) => (
+          {([...(isMasterAdmin ? (['settings'] as Tab[]) : []), 'rooms', 'bookings', 'gallery'] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -764,6 +856,138 @@ export default function AdminPage() {
 
         {/* Rooms Tab */}
         <AnimatePresence mode="wait">
+          {tab === 'settings' && isMasterAdmin && (
+            <motion.div
+              key="settings"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl text-white font-semibold">Site Settings</h2>
+                  <p className="mt-1 text-sm text-gray-400">Manage homepage content and the global website images used on the homepage and Book Now flow.</p>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleSaveSiteSettings}
+                  disabled={saving}
+                  className="flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-dark transition-colors hover:bg-gold-light disabled:opacity-60"
+                >
+                  <Save size={16} />
+                  {saving ? 'Saving...' : 'Save Settings'}
+                </motion.button>
+              </div>
+
+              <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+                <div className="space-y-6">
+                  <div className="rounded-xl border border-dark-border bg-dark-card p-5">
+                    <h3 className="mb-4 text-white font-semibold">Homepage Copy</h3>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="sm:col-span-2">
+                        <label className="block text-gray-400 text-sm mb-2">Site Title</label>
+                        <input value={siteSettings.general.siteTitle} onChange={(e) => updateSiteSettingsGeneral('siteTitle', e.target.value)} className="w-full bg-dark border border-dark-border rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gold" />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-gray-400 text-sm mb-2">Site Tagline</label>
+                        <input value={siteSettings.general.siteTagline} onChange={(e) => updateSiteSettingsGeneral('siteTagline', e.target.value)} className="w-full bg-dark border border-dark-border rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gold" />
+                      </div>
+                      <div>
+                        <label className="block text-gray-400 text-sm mb-2">Hero Primary Text</label>
+                        <input value={siteSettings.general.homeHeroPrimaryText} onChange={(e) => updateSiteSettingsGeneral('homeHeroPrimaryText', e.target.value)} className="w-full bg-dark border border-dark-border rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gold" />
+                      </div>
+                      <div>
+                        <label className="block text-gray-400 text-sm mb-2">Hero Highlight Text</label>
+                        <input value={siteSettings.general.homeHeroHighlightText} onChange={(e) => updateSiteSettingsGeneral('homeHeroHighlightText', e.target.value)} className="w-full bg-dark border border-dark-border rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gold" />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-gray-400 text-sm mb-2">Hero Secondary Text</label>
+                        <input value={siteSettings.general.homeHeroSecondaryText} onChange={(e) => updateSiteSettingsGeneral('homeHeroSecondaryText', e.target.value)} className="w-full bg-dark border border-dark-border rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gold" />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-gray-400 text-sm mb-2">Hero Description</label>
+                        <textarea value={siteSettings.general.homeHeroDescription} onChange={(e) => updateSiteSettingsGeneral('homeHeroDescription', e.target.value)} rows={4} className="w-full bg-dark border border-dark-border rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gold" />
+                      </div>
+                      <div>
+                        <label className="block text-gray-400 text-sm mb-2">Booking Badge</label>
+                        <input value={siteSettings.general.homeBookingBadge} onChange={(e) => updateSiteSettingsGeneral('homeBookingBadge', e.target.value)} className="w-full bg-dark border border-dark-border rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gold" />
+                      </div>
+                      <div>
+                        <label className="block text-gray-400 text-sm mb-2">CTA Title</label>
+                        <input value={siteSettings.general.homeCtaTitle} onChange={(e) => updateSiteSettingsGeneral('homeCtaTitle', e.target.value)} className="w-full bg-dark border border-dark-border rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gold" />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-gray-400 text-sm mb-2">CTA Description</label>
+                        <textarea value={siteSettings.general.homeCtaDescription} onChange={(e) => updateSiteSettingsGeneral('homeCtaDescription', e.target.value)} rows={4} className="w-full bg-dark border border-dark-border rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gold" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="rounded-xl border border-dark-border bg-dark-card p-5">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-white font-semibold">Homepage Hero Images</h3>
+                        <p className="text-xs text-gray-400 mt-1">These images rotate in the homepage hero.</p>
+                      </div>
+                      <button onClick={() => homeHeroImagesInputRef.current?.click()} disabled={siteUploading} className="rounded-lg border border-dark-border px-3 py-2 text-sm text-gray-300 transition-colors hover:border-gold hover:text-gold disabled:opacity-60">Upload</button>
+                    </div>
+                    <input ref={homeHeroImagesInputRef} type="file" multiple accept="image/*" onChange={(e) => e.target.files && handleSiteImageUpload('homeHeroImages', e.target.files)} className="hidden" />
+                    <div className="grid grid-cols-2 gap-3">
+                      {siteSettings.images.homeHeroImages.map((image, index) => (
+                        <div key={`${image}-${index}`} className="group relative overflow-hidden rounded-lg border border-dark-border bg-dark">
+                          <div className="aspect-[16/10] bg-cover bg-center" style={{ backgroundImage: `url(${getPreviewImageUrl(image)})` }} />
+                          <button onClick={() => removeSiteSettingImage('homeHeroImages', index)} className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+                            <X size={16} className="text-white" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-dark-border bg-dark-card p-5">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-white font-semibold">Luxurious Comfort Image</h3>
+                        <p className="text-xs text-gray-400 mt-1">Displayed beside the Luxurious Comfort Awaits content block.</p>
+                      </div>
+                      <button onClick={() => homeLuxuryCtaInputRef.current?.click()} disabled={siteUploading} className="rounded-lg border border-dark-border px-3 py-2 text-sm text-gray-300 transition-colors hover:border-gold hover:text-gold disabled:opacity-60">Replace</button>
+                    </div>
+                    <input ref={homeLuxuryCtaInputRef} type="file" accept="image/*" onChange={(e) => e.target.files && handleSiteImageUpload('homeLuxuryCtaImage', e.target.files)} className="hidden" />
+                    <div className="overflow-hidden rounded-lg border border-dark-border bg-dark">
+                      <div className="aspect-[16/10] bg-cover bg-center" style={{ backgroundImage: `url(${getPreviewImageUrl(siteSettings.images.homeLuxuryCtaImage)})` }} />
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-dark-border bg-dark-card p-5">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-white font-semibold">Book Now Background Images</h3>
+                        <p className="text-xs text-gray-400 mt-1">These images rotate behind the Book Now page.</p>
+                      </div>
+                      <button onClick={() => bookNowBackgroundImagesInputRef.current?.click()} disabled={siteUploading} className="rounded-lg border border-dark-border px-3 py-2 text-sm text-gray-300 transition-colors hover:border-gold hover:text-gold disabled:opacity-60">Upload</button>
+                    </div>
+                    <input ref={bookNowBackgroundImagesInputRef} type="file" multiple accept="image/*" onChange={(e) => e.target.files && handleSiteImageUpload('bookNowBackgroundImages', e.target.files)} className="hidden" />
+                    <div className="grid grid-cols-2 gap-3">
+                      {siteSettings.images.bookNowBackgroundImages.map((image, index) => (
+                        <div key={`${image}-${index}`} className="group relative overflow-hidden rounded-lg border border-dark-border bg-dark">
+                          <div className="aspect-[16/10] bg-cover bg-center" style={{ backgroundImage: `url(${getPreviewImageUrl(image)})` }} />
+                          <button onClick={() => removeSiteSettingImage('bookNowBackgroundImages', index)} className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+                            <X size={16} className="text-white" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {tab === 'rooms' && (
             <motion.div
               key="rooms"

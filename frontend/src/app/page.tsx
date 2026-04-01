@@ -17,7 +17,7 @@ import {
   Star,
 } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
-import { api, Property, Room, formatCurrency, getImageUrl } from '@/lib/api';
+import { api, defaultSiteSettings, Property, Room, SiteSettings, formatCurrency, getImageUrl } from '@/lib/api';
 import { defaultProperties, getDefaultRoomsForProperty } from '@/lib/default-room-catalog';
 import { useBookingStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
@@ -28,12 +28,6 @@ const fadeInUp = {
   viewport: { once: true, margin: '-50px' },
   transition: { duration: 0.6 },
 };
-
-const heroImages = [
-  'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1920&q=80',
-  'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1920&q=80',
-  'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1920&q=80',
-];
 
 const roomImageFallbacks: Record<string, string> = {
   'royal suite': 'https://images.unsplash.com/photo-1590490360182-c33d955c4644?w=1200&q=80',
@@ -116,6 +110,7 @@ const guestStories = [
 export default function Home() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [properties, setProperties] = useState<Property[]>(defaultProperties);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [selectedPropertyId, setSelectedPropertyId] = useState(defaultProperties[0].id);
   const [heroIndex, setHeroIndex] = useState(0);
   const [checkIn, setCheckIn] = useState('');
@@ -133,19 +128,23 @@ export default function Home() {
     }).catch(() => setProperties(defaultProperties));
 
     api.rooms.getAll().then(setRooms).catch(() => setRooms([]));
+    api.siteSettings.get().then(setSiteSettings).catch(() => setSiteSettings(defaultSiteSettings));
   }, []);
 
   useEffect(() => {
+    const heroImages = siteSettings.images.homeHeroImages.length > 0 ? siteSettings.images.homeHeroImages : defaultSiteSettings.images.homeHeroImages;
     const interval = setInterval(() => {
       setHeroIndex((prev) => (prev + 1) % heroImages.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [siteSettings.images.homeHeroImages]);
 
   const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || properties[0] || defaultProperties[0];
   const propertyRooms = rooms.filter((room) => room.propertyId === selectedPropertyId);
   const fallbackPropertyRooms = getDefaultRoomsForProperty(selectedPropertyId);
   const displayRooms = (propertyRooms.length > 0 ? propertyRooms : fallbackPropertyRooms).slice(0, 3);
+  const heroImages = siteSettings.images.homeHeroImages.length > 0 ? siteSettings.images.homeHeroImages : defaultSiteSettings.images.homeHeroImages;
+  const luxuryCtaImage = siteSettings.images.homeLuxuryCtaImage || defaultSiteSettings.images.homeLuxuryCtaImage;
 
   const handleSearch = () => {
     if (checkIn) setDates(checkIn, checkOut);
@@ -198,20 +197,20 @@ export default function Home() {
             className="text-center max-w-5xl"
           >
             <p className="mb-4 inline-flex items-center rounded-full border border-gold/35 bg-black/25 px-4 py-2 text-[11px] uppercase tracking-[0.3em] text-gold/90 backdrop-blur-md">
-              Refined stays. Seamless booking. Signature comfort.
+              {siteSettings.general.siteTagline}
             </p>
             <h1 className="text-[clamp(3rem,7vw,6.4rem)] font-light text-white mb-1 leading-[0.92] tracking-[-0.04em] drop-shadow-[0_10px_40px_rgba(0,0,0,0.45)]">
-              Experience{' '}
-              <span className="italic font-serif text-gold-light">Luxury</span>
+              {siteSettings.general.homeHeroPrimaryText}{' '}
+              <span className="italic font-serif text-gold-light">{siteSettings.general.homeHeroHighlightText}</span>
             </h1>
             <h2 className="text-[clamp(2.2rem,5vw,4.8rem)] font-light text-white tracking-[-0.03em]">
-              at{' '}
+              {siteSettings.general.homeHeroSecondaryText.split('THE SUITE')[0] || ''}{' '}
               <span className="bg-gradient-to-r from-gold-light via-gold to-gold-dark bg-clip-text font-bold tracking-[0.14em] text-transparent">
-                THE SUITE
+                {siteSettings.general.siteTitle}
               </span>
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-gray-200/85 sm:text-base">
-              Discover elegant rooms, effortless reservations, and a boutique luxury experience designed for comfort from the first click.
+              {siteSettings.general.homeHeroDescription}
             </p>
           </motion.div>
 
@@ -229,7 +228,7 @@ export default function Home() {
                   <p className="mt-1 text-sm text-gray-300">Choose your property, dates, and guests to explore the right rooms instantly.</p>
                 </div>
                 <div className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-emerald-200">
-                  Instant confirmation
+                  {siteSettings.general.homeBookingBadge}
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-[1.1fr_1fr_1fr_0.8fr_auto] gap-3">
@@ -452,8 +451,7 @@ export default function Home() {
               <div
                 className="h-full bg-cover bg-center"
                 style={{
-                  backgroundImage:
-                    'url(https://images.unsplash.com/photo-1540541338287-41700207dee6?w=1200&q=80)',
+                  backgroundImage: `url(${luxuryCtaImage.startsWith('http') ? luxuryCtaImage : getImageUrl(luxuryCtaImage)})`,
                 }}
               />
             </motion.div>
@@ -465,11 +463,10 @@ export default function Home() {
               className="bg-dark-card p-8 sm:p-10 lg:p-16 xl:p-20 flex flex-col justify-center"
             >
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light text-gold mb-4 sm:mb-5 font-serif italic leading-tight">
-                Luxurious Comfort Awaits
+                {siteSettings.general.homeCtaTitle}
               </h2>
               <p className="text-gray-300 leading-relaxed mb-7 sm:mb-8 max-w-xl text-base sm:text-lg">
-                Unwind in style and indulge in unparalleled comfort at THE SUITE.
-                Your perfect getaway starts here.
+                {siteSettings.general.homeCtaDescription}
               </p>
               <Link href="/rooms">
                 <motion.button

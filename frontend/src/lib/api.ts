@@ -72,6 +72,54 @@ export interface GalleryImage {
   createdAt: string;
 }
 
+export interface SiteSettings {
+  general: {
+    siteTitle: string;
+    siteTagline: string;
+    homeHeroPrimaryText: string;
+    homeHeroHighlightText: string;
+    homeHeroSecondaryText: string;
+    homeHeroDescription: string;
+    homeBookingBadge: string;
+    homeCtaTitle: string;
+    homeCtaDescription: string;
+  };
+  images: {
+    homeHeroImages: string[];
+    homeLuxuryCtaImage: string;
+    bookNowBackgroundImages: string[];
+  };
+}
+
+export const defaultSiteSettings: SiteSettings = {
+  general: {
+    siteTitle: 'THE SUITE',
+    siteTagline: 'Refined stays. Seamless booking. Signature comfort.',
+    homeHeroPrimaryText: 'Experience',
+    homeHeroHighlightText: 'Luxury',
+    homeHeroSecondaryText: 'at THE SUITE',
+    homeHeroDescription:
+      'Discover elegant rooms, effortless reservations, and a boutique luxury experience designed for comfort from the first click.',
+    homeBookingBadge: 'Instant confirmation',
+    homeCtaTitle: 'Luxurious Comfort Awaits',
+    homeCtaDescription:
+      'Unwind in style and indulge in unparalleled comfort at THE SUITE. Your perfect getaway starts here.',
+  },
+  images: {
+    homeHeroImages: [
+      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1920&q=80',
+      'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1920&q=80',
+      'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1920&q=80',
+    ],
+    homeLuxuryCtaImage: 'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=1200&q=80',
+    bookNowBackgroundImages: [
+      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1920&q=80',
+      'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1920&q=80',
+      'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1920&q=80',
+    ],
+  },
+};
+
 async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
@@ -106,6 +154,11 @@ async function fetchAdminAPI<T>(endpoint: string, options?: RequestInit): Promis
 export const api = {
   properties: {
     getAll: () => fetchAPI<Property[]>('/properties'),
+  },
+  siteSettings: {
+    get: () => fetchAPI<SiteSettings>('/site-settings'),
+    update: (data: SiteSettings) =>
+      fetchAdminAPI<SiteSettings>('/site-settings', { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }),
   },
   rooms: {
     getAll: (params?: { propertyId?: string; includeArchived?: boolean }) =>
@@ -150,6 +203,17 @@ export const api = {
       const formData = new FormData();
       Array.from(files).forEach((file) => formData.append('images', file));
       const res = await fetch(`${ADMIN_PROXY_BASE}/upload/gallery-images`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      return res.json();
+    },
+    siteImages: async (files: FileList): Promise<{ images: string[] }> => {
+      const formData = new FormData();
+      Array.from(files).forEach((file) => formData.append('images', file));
+      const res = await fetch(`${ADMIN_PROXY_BASE}/upload/site-images`, {
         method: 'POST',
         credentials: 'include',
         body: formData,
