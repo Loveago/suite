@@ -69,9 +69,11 @@ function RoomsPageContent() {
   const groupedRooms = getCategoryOrderForProperty(selectedProperty.slug, filteredRooms.map((room) => room.category))
     .map((category) => ({
       category,
-      rooms: filteredRooms.filter((room) => room.category === category),
+      rooms: filteredRooms.filter((room) => room.category === category).slice(0, 1),
     }))
     .filter((group) => group.rooms.length > 0);
+
+  const displayedRoomCount = groupedRooms.length;
 
   return (
     <PageTransition>
@@ -124,7 +126,7 @@ function RoomsPageContent() {
                 Filters
               </button>
               <span className="text-gray-500 text-sm">
-                {filteredRooms.length} room{filteredRooms.length !== 1 ? 's' : ''} found
+                {displayedRoomCount} category{displayedRoomCount !== 1 ? 'ies' : 'y'} shown
               </span>
             </div>
             <select
