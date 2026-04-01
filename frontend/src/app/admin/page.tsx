@@ -635,8 +635,12 @@ export default function AdminPage() {
     .filter((category) => groupedRooms[category]?.length)
     .map((category) => ({
       category,
-      rooms: [...groupedRooms[category]].sort((a, b) => a.roomNumber.localeCompare(b.roomNumber, undefined, { numeric: true })),
+      rooms: [...groupedRooms[category]]
+        .sort((a, b) => a.roomNumber.localeCompare(b.roomNumber, undefined, { numeric: true }))
+        .slice(0, 1),
     }));
+
+  const displayedCategoryCount = sortedRoomGroups.length;
 
   const chooseProperty = (propertyId: string) => {
     if (!isMasterAdmin && propertyId !== selectedPropertyId) {
@@ -997,7 +1001,7 @@ export default function AdminPage() {
               transition={{ duration: 0.3 }}
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl text-white font-semibold">Rooms ({visibleRooms.length})</h2>
+                <h2 className="text-xl text-white font-semibold">Rooms ({displayedCategoryCount})</h2>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -1056,7 +1060,7 @@ export default function AdminPage() {
                           </div>
                         </div>
                         <span className="text-sm text-gray-500">
-                          {group.rooms.length} room{group.rooms.length !== 1 ? 's' : ''}
+                          {group.rooms.length} room shown
                         </span>
                       </button>
 
