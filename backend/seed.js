@@ -1,6 +1,12 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+const kingstelSharedAmenities =
+  'Includes 8 plates, 4 tea cups, 4 serving plates, 6 bowls, 6 medium plates, 1 big cup, 4 beer glasses, 4 old fashioned glasses, 4 wine glasses, 6 champagne glasses, 8 forks, 8 knives, 4 spoons, 4 tea spoons, TV, chairs, AC, guest washroom, bathroom, microwave, kettle, blender, and heater.';
+
+const toRoomDisplayName = (category) =>
+  /room|bedroom/i.test(category) ? category : `${category} Room`;
+
 async function main() {
   const propertiesToSeed = [
     {
@@ -51,22 +57,22 @@ async function main() {
       ],
     },
     'kingstel-escape-accra': {
-      Small: [
+      'Single room': [
         'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=1200&q=80',
         'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80',
         'https://images.unsplash.com/photo-1616046229478-9901c5536a45?auto=format&fit=crop&w=1200&q=80',
       ],
-      Medium: [
+      '1 bedroom': [
         'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
         'https://images.unsplash.com/photo-1616594039964-58e5f4f7b7dd?auto=format&fit=crop&w=1200&q=80',
         'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?auto=format&fit=crop&w=1200&q=80',
       ],
-      Large: [
+      '3 bedroom': [
         'https://images.unsplash.com/photo-1505693538694-c5b2d7f3f5f6?auto=format&fit=crop&w=1200&q=80',
         'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1200&q=80',
         'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80',
       ],
-      VIP: [
+      '4 bedroom': [
         'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80',
         'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80',
         'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80',
@@ -82,10 +88,10 @@ async function main() {
       VIP: 'Our most exclusive Tema category, crafted for guests who want superior privacy, prestige, and a truly elevated experience.',
     },
     'kingstel-escape-accra': {
-      Small: 'A sleek Accra city room with warm textures, efficient comfort, and luxury essentials designed for short premium stays.',
-      Medium: 'A refined Kingstel Escape room with added space, polished furnishings, and a calm urban atmosphere in Accra.',
-      Large: 'A spacious Accra stay with expanded comfort, upscale finishes, and a modern hospitality feel for longer city visits.',
-      VIP: 'The signature Kingstel Escape experience in Accra, pairing standout comfort, premium styling, and elevated privacy.',
+      'Single room': `A compact Kingstel Escape stay designed for solo travelers or short visits. ${kingstelSharedAmenities}`,
+      '1 bedroom': `A spacious one-bedroom option at Kingstel Escape with more comfort for extended stays. ${kingstelSharedAmenities}`,
+      '3 bedroom': `A larger multi-room Kingstel Escape option suited for groups or family stays. ${kingstelSharedAmenities}`,
+      '4 bedroom': `The largest Kingstel Escape category currently listed, offering the most space for group accommodation. ${kingstelSharedAmenities}`,
     },
   };
 
@@ -110,14 +116,16 @@ async function main() {
       { category: 'Large', roomNumber: 'K17', price: 1300 },
     ],
     'kingstel-escape-accra': [
-      { category: 'Small', roomNumber: 'A01', price: 900 },
-      { category: 'Small', roomNumber: 'A02', price: 900 },
-      { category: 'Medium', roomNumber: 'A03', price: 1200 },
-      { category: 'Medium', roomNumber: 'A04', price: 1200 },
-      { category: 'Large', roomNumber: 'A05', price: 1450 },
-      { category: 'Large', roomNumber: 'A06', price: 1450 },
-      { category: 'VIP', roomNumber: 'A07', price: 1700 },
-      { category: 'VIP', roomNumber: 'A08', price: 1700 },
+      { category: '1 bedroom', roomNumber: 'KE-1B-01', price: 1200 },
+      { category: '1 bedroom', roomNumber: 'KE-1B-02', price: 1200 },
+      { category: '1 bedroom', roomNumber: 'KE-1B-03', price: 1200 },
+      { category: '3 bedroom', roomNumber: 'KE-3B-01', price: 1450 },
+      { category: '3 bedroom', roomNumber: 'KE-3B-02', price: 1450 },
+      { category: '3 bedroom', roomNumber: 'KE-3B-03', price: 1450 },
+      { category: '4 bedroom', roomNumber: 'KE-4B-01', price: 1700 },
+      { category: 'Single room', roomNumber: 'KE-SR-01', price: 900 },
+      { category: 'Single room', roomNumber: 'KE-SR-02', price: 900 },
+      { category: 'Single room', roomNumber: 'KE-SR-03', price: 900 },
     ],
   };
 
@@ -163,7 +171,7 @@ async function main() {
     seededProperties.push(property);
 
     const rooms = roomCatalogByProperty[propertySeed.slug].map((room) => ({
-      name: `${room.category} Room`,
+      name: toRoomDisplayName(room.category),
       category: room.category,
       roomNumber: room.roomNumber,
       description: categoryDescriptionsByProperty[propertySeed.slug][room.category],

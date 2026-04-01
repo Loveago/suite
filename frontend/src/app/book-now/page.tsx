@@ -26,6 +26,8 @@ const inputCls =
 
 const labelCls = 'block text-gray-400 text-xs font-semibold uppercase tracking-widest mb-2';
 
+const toRoomTypeLabel = (category: string) => (/room|bedroom/i.test(category) ? category : `${category} Room`);
+
 export default function BookNowPage() {
   const router = useRouter();
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -35,7 +37,6 @@ export default function BookNowPage() {
 
   const [selectedPropertyId, setSelectedPropertyId] = useState(defaultProperties[0].id);
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedRoomId, setSelectedRoomId] = useState('');
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [numGuests, setNumGuests] = useState(2);
@@ -62,19 +63,17 @@ export default function BookNowPage() {
 
   useEffect(() => {
     setSelectedCategory('');
-    setSelectedRoomId('');
   }, [selectedPropertyId]);
 
   const categories = roomCategoryOrder.filter((category) => rooms.some((room) => room.category === category));
   const roomsInSelectedCategory = rooms.filter((room) => room.category === selectedCategory);
-  const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
   const selectedCategoryPrice = roomsInSelectedCategory[0]?.price || 0;
   const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || defaultProperties[0];
   const nights = (() => {
     if (!checkIn || !checkOut) return 0;
     return Math.max(0, Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000));
   })();
-  const totalAmount = nights * (selectedRoom?.price || selectedCategoryPrice);
+  const totalAmount = nights * selectedCategoryPrice;
 
   const goNext = () => {
     setError('');
@@ -105,7 +104,6 @@ export default function BookNowPage() {
     setSubmitting(true);
     try {
       await api.bookings.create({
-        roomId: selectedRoomId || undefined,
         roomCategory: selectedCategory,
         propertyId: selectedPropertyId,
         checkIn,
@@ -237,10 +235,7 @@ export default function BookNowPage() {
                       <label className={labelCls}>Room Category</label>
                       <select
                         value={selectedCategory}
-                        onChange={(e) => {
-                          setSelectedCategory(e.target.value);
-                          setSelectedRoomId('');
-                        }}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
                         className={inputCls}
                       >
                         <option value="">Select a room category</option>
@@ -248,31 +243,14 @@ export default function BookNowPage() {
                           const categoryRoom = rooms.find((room) => room.category === category);
                           return (
                             <option key={category} value={category}>
-                              {category} Room — {categoryRoom ? `${formatCurrency(categoryRoom.price)}/night` : ''}
+                              {toRoomTypeLabel(category)} — {categoryRoom ? `${formatCurrency(categoryRoom.price)}/night` : ''}
                             </option>
                           );
                         })}
                       </select>
                     </div>
 
-                    <div>
-                      <label className={labelCls}>Room Number <span className="text-gray-600 normal-case tracking-normal text-xs">(Optional)</span></label>
-                      <select
-                        value={selectedRoomId}
-                        onChange={(e) => setSelectedRoomId(e.target.value)}
-                        className={inputCls}
-                        disabled={!selectedCategory}
-                      >
-                        <option value="">Assign any available room automatically</option>
-                        {roomsInSelectedCategory.map((room) => (
-                          <option key={room.id} value={room.id}>
-                            {room.roomNumber} — {formatCurrency(room.price)}/night
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {(selectedRoom || selectedCategory) && (
+                    {selectedCategory && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
@@ -280,13 +258,9 @@ export default function BookNowPage() {
                       >
                         <BedDouble size={18} className="text-gold flex-shrink-0" />
                         <div>
-                          <p className="text-gold text-sm font-semibold">
-                            {selectedRoom
-                              ? `${selectedRoom.category} Room · ${selectedRoom.roomNumber}`
-                              : `${selectedCategory} Room · Random room assignment`}
-                          </p>
+                          <p className="text-gold text-sm font-semibold">{selectedCategory} · Automatic room assignment</p>
                           <p className="text-gray-400 text-xs">
-                            {formatCurrency(selectedRoom?.price || selectedCategoryPrice)} per night
+                            {formatCurrency(selectedCategoryPrice)} per night
                           </p>
                         </div>
                       </motion.div>
@@ -409,13 +383,13 @@ export default function BookNowPage() {
                     <div className="space-y-3 mb-6">
                       {[
                         { label: 'Property', value: `${selectedProperty.name} · ${selectedProperty.city}` },
-                        { label: 'Room Type', value: selectedCategory ? `${selectedCategory} Room` : '—' },
-                        { label: 'Room Number', value: selectedRoom?.roomNumber || 'Random available room' },
+                        { label: 'Room Type', value: selectedCategory || '—' },
+                        { label: 'Room Number', value: 'Assigned automatically after availability check' },
                         { label: 'Check-in', value: formatDate(checkIn) },
                         { label: 'Check-out', value: formatDate(checkOut) },
                         { label: 'Duration', value: `${nights} night${nights !== 1 ? 's' : ''}` },
                         { label: 'Guests', value: `${numGuests} guest${numGuests !== 1 ? 's' : ''}` },
-                        { label: 'Assignment', value: selectedRoom ? 'Specific room selected' : 'Random available room assignment' },
+                        { label: 'Assignment', value: 'Automatic available room assignment' },
                         { label: 'Guest Name', value: `${firstName} ${lastName}`.trim() || '—' },
                         { label: 'Email', value: email || '—' },
                         { label: 'Phone', value: phone || '—' },

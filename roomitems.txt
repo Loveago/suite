@@ -1,0 +1,41 @@
+room category
+1 bedroom - 3 rooms
+3 bedroom - 3 rooms
+4 bedroom - 1 room
+Single room - 3 rooms
+
+room items
+1. 8 PLATES.
+
+2. 4 TEA CUP
+
+3. 4 SERVING PLATE
+
+4. 6 BOWLS
+
+5. 6 MEDIUM PATE
+
+6. 1 BIG CUP
+
+7. 4 BEER GLASS
+
+8. 4 OLD FASHIONED GLASS
+
+9. 4 WINE GLASS
+
+10. 6 CHAMPAGNE GLASS
+
+11. 8 FORKS
+
+12. 8 KNIVES
+
+13.4 SPOONS
+
+14. 4 TEA SPOONS
+TV, Chair, bimmer hall and chair
+
+AC, hall itself, guest washroom
+
+and 4room, bath and washrones
+
+Mars wave, kettle, blender, hester
