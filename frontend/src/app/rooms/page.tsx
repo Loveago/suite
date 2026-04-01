@@ -8,7 +8,7 @@ import { SlidersHorizontal, X } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
 import PriceWithUsd from '@/components/PriceWithUsd';
 import { api, Property, Room, formatCurrency, getImageUrl } from '@/lib/api';
-import { defaultProperties, getDefaultRoomsForProperty, roomCategoryOrder } from '@/lib/default-room-catalog';
+import { defaultProperties, getAllowedCategoriesForProperty, getCategoryOrderForProperty, getDefaultRoomsForProperty } from '@/lib/default-room-catalog';
 
 function RoomsPageContent() {
   const router = useRouter();
@@ -40,7 +40,10 @@ function RoomsPageContent() {
 
   const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || defaultProperties.find((property) => property.id === selectedPropertyId) || defaultProperties[0];
 
+  const allowedCategories = getAllowedCategoriesForProperty(selectedProperty.slug);
+
   const filteredRooms = rooms
+    .filter((room) => allowedCategories.includes(room.category))
     .filter((room) => room.price >= priceRange[0] && room.price <= priceRange[1])
     .sort((a, b) => {
       if (sortBy === 'price-low') return a.price - b.price;
@@ -63,7 +66,7 @@ function RoomsPageContent() {
     router.push(`/rooms?${nextParams.toString()}`);
   };
 
-  const groupedRooms = roomCategoryOrder
+  const groupedRooms = getCategoryOrderForProperty(selectedProperty.slug, filteredRooms.map((room) => room.category))
     .map((category) => ({
       category,
       rooms: filteredRooms.filter((room) => room.category === category),

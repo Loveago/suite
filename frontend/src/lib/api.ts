@@ -132,6 +132,7 @@ export const api = {
     }) => fetchAPI<Booking>('/bookings', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: { status?: string; paymentStatus?: string; paymentMethod?: string }) =>
       fetchAdminAPI<Booking>(`/bookings/${id}`, { method: 'PUT', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }),
+    delete: (id: string) => fetchAdminAPI<{ message: string }>(`/bookings/${id}`, { method: 'DELETE' }),
   },
   upload: {
     roomImages: async (files: FileList): Promise<{ images: string[] }> => {

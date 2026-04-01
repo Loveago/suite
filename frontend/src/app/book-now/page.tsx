@@ -6,7 +6,7 @@ import { Calendar, User, Check, BedDouble, ChevronRight, ChevronLeft, Sparkles }
 import PageTransition from '@/components/PageTransition';
 import PriceWithUsd from '@/components/PriceWithUsd';
 import { api, Property, Room, formatCurrency } from '@/lib/api';
-import { defaultProperties, getDefaultRoomsForProperty, roomCategoryOrder } from '@/lib/default-room-catalog';
+import { defaultProperties, getAllowedCategoriesForProperty, getCategoryOrderForProperty, getDefaultRoomsForProperty } from '@/lib/default-room-catalog';
 import { useRouter } from 'next/navigation';
 
 const STEPS = [
@@ -65,10 +65,12 @@ export default function BookNowPage() {
     setSelectedCategory('');
   }, [selectedPropertyId]);
 
-  const categories = roomCategoryOrder.filter((category) => rooms.some((room) => room.category === category));
-  const roomsInSelectedCategory = rooms.filter((room) => room.category === selectedCategory);
-  const selectedCategoryPrice = roomsInSelectedCategory[0]?.price || 0;
   const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || defaultProperties[0];
+  const allowedCategories = getAllowedCategoriesForProperty(selectedProperty.slug);
+  const visibleRooms = rooms.filter((room) => allowedCategories.includes(room.category));
+  const categories = getCategoryOrderForProperty(selectedProperty.slug, visibleRooms.map((room) => room.category));
+  const roomsInSelectedCategory = visibleRooms.filter((room) => room.category === selectedCategory);
+  const selectedCategoryPrice = roomsInSelectedCategory[0]?.price || 0;
   const nights = (() => {
     if (!checkIn || !checkOut) return 0;
     return Math.max(0, Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000));

@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
 import { api, Room, Booking, GalleryImage, Property, formatCurrency, getImageUrl } from '@/lib/api';
-import { defaultProperties } from '@/lib/default-room-catalog';
+import { defaultProperties, getAllowedCategoriesForProperty, getCategoryOrderForProperty } from '@/lib/default-room-catalog';
 import { useRouter } from 'next/navigation';
 
 type Tab = 'rooms' | 'bookings' | 'gallery';
@@ -50,6 +50,8 @@ const emptyRoomForm: RoomForm = {
   images: [],
   propertyId: '',
 };
+
+const toRoomTypeLabel = (category: string) => (/room|bedroom/i.test(category) ? category : `${category} Room`);
 
 export default function AdminPage() {
   const router = useRouter();
@@ -401,6 +403,18 @@ export default function AdminPage() {
     }
   };
 
+  const handleDeleteBooking = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this booking?')) return;
+    try {
+      await api.bookings.delete(id);
+      loadData();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete booking';
+      setError(message);
+      alert(message);
+    }
+  };
+
   const handleToggleRoomBooked = async (room: Room) => {
     try {
       await api.rooms.update(room.id, { isBooked: !room.isBooked });
@@ -508,7 +522,14 @@ export default function AdminPage() {
       .reduce((sum, booking) => sum + booking.totalPrice, 0),
   };
 
-  const groupedRooms = rooms.reduce<Record<string, Room[]>>((acc, room) => {
+  const latestBooking = bookings[0] || null;
+  const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || null;
+  const isMasterAdmin = adminSession?.role !== 'property';
+  const isPropertyScopedAdmin = adminSession?.role === 'property';
+  const allowedCategories = getAllowedCategoriesForProperty(selectedProperty?.slug);
+  const visibleRooms = rooms.filter((room) => allowedCategories.includes(room.category));
+
+  const groupedRooms = visibleRooms.reduce<Record<string, Room[]>>((acc, room) => {
     if (!acc[room.category]) {
       acc[room.category] = [];
     }
@@ -516,7 +537,7 @@ export default function AdminPage() {
     return acc;
   }, {});
 
-  const categoryOrder = ['Small', 'Medium', 'Large', 'VIP'];
+  const categoryOrder = getCategoryOrderForProperty(selectedProperty?.slug, Object.keys(groupedRooms));
 
   const sortedRoomGroups = categoryOrder
     .filter((category) => groupedRooms[category]?.length)
@@ -524,10 +545,6 @@ export default function AdminPage() {
       category,
       rooms: [...groupedRooms[category]].sort((a, b) => a.roomNumber.localeCompare(b.roomNumber, undefined, { numeric: true })),
     }));
-  const latestBooking = bookings[0] || null;
-  const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || null;
-  const isMasterAdmin = adminSession?.role !== 'property';
-  const isPropertyScopedAdmin = adminSession?.role === 'property';
 
   const chooseProperty = (propertyId: string) => {
     if (!isMasterAdmin && propertyId !== selectedPropertyId) {
@@ -756,7 +773,7 @@ export default function AdminPage() {
               transition={{ duration: 0.3 }}
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl text-white font-semibold">Rooms ({rooms.length})</h2>
+                <h2 className="text-xl text-white font-semibold">Rooms ({visibleRooms.length})</h2>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -782,7 +799,7 @@ export default function AdminPage() {
                     </div>
                   ))}
                 </div>
-              ) : rooms.length === 0 ? (
+              ) : visibleRooms.length === 0 ? (
                 <div className="text-center py-16 bg-dark-card border border-dark-border rounded-xl">
                   <BedDouble className="w-12 h-12 text-gray-600 mx-auto mb-4" />
                   <p className="text-gray-400 mb-4">No rooms yet</p>
@@ -811,7 +828,7 @@ export default function AdminPage() {
                           </span>
                           <div>
                             <p className="text-gold/70 text-[10px] uppercase tracking-[0.22em] mb-1">Category</p>
-                            <h3 className="text-white text-lg font-semibold">{group.category} Rooms</h3>
+                            <h3 className="text-white text-lg font-semibold">{toRoomTypeLabel(group.category)}</h3>
                           </div>
                         </div>
                         <span className="text-sm text-gray-500">
@@ -1060,6 +1077,14 @@ export default function AdminPage() {
                                     <span className="block text-xs text-gray-500">Payment</span>
                                     <span className="text-sm text-white capitalize">{booking.paymentStatus}</span>
                                   </div>
+                                  <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={() => handleDeleteBooking(booking.id)}
+                                    className="w-full rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/20"
+                                  >
+                                    Delete booking
+                                  </motion.button>
                                 </div>
                               </div>
                             </div>
@@ -1254,8 +1279,8 @@ export default function AdminPage() {
                       className="w-full bg-dark border border-dark-border rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-gold transition-colors"
                     >
                       <option value="">Select category</option>
-                      {['Small', 'Medium', 'Large', 'VIP'].map((category) => (
-                        <option key={category} value={category}>{category}</option>
+                      {allowedCategories.map((category) => (
+                        <option key={category} value={category}>{toRoomTypeLabel(category)}</option>
                       ))}
                     </select>
                   </div>

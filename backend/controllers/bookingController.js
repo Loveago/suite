@@ -254,4 +254,28 @@ const updateBooking = async (req, res) => {
   }
 };
 
-module.exports = { createBooking, getAllBookings, searchPublicBookings, updateBooking };
+const deleteBooking = async (req, res) => {
+  try {
+    const existingBooking = await prisma.booking.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, roomId: true, room: { select: { propertyId: true } } },
+    });
+
+    if (!existingBooking) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    if (req.adminSession?.role === 'property' && existingBooking.room?.propertyId !== req.adminScopedProperty?.id) {
+      return res.status(403).json({ error: 'You do not have access to this property' });
+    }
+
+    await prisma.booking.delete({ where: { id: req.params.id } });
+    await syncRoomBookedStatus(existingBooking.roomId);
+
+    res.json({ message: 'Booking deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete booking', details: error.message });
+  }
+};
+
+module.exports = { createBooking, getAllBookings, searchPublicBookings, updateBooking, deleteBooking };

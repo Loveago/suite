@@ -170,6 +170,24 @@ async function main() {
 
     seededProperties.push(property);
 
+    const activeRoomNumbers = new Set(roomCatalogByProperty[propertySeed.slug].map((room) => room.roomNumber));
+    const activeCategories = new Set(roomCatalogByProperty[propertySeed.slug].map((room) => room.category));
+
+    await prisma.room.updateMany({
+      where: {
+        propertyId: property.id,
+        OR: [
+          { roomNumber: { notIn: Array.from(activeRoomNumbers) } },
+          { category: { notIn: Array.from(activeCategories) } },
+        ],
+      },
+      data: {
+        isActive: false,
+        isBooked: false,
+        archivedAt: new Date(),
+      },
+    });
+
     const rooms = roomCatalogByProperty[propertySeed.slug].map((room) => ({
       name: toRoomDisplayName(room.category),
       category: room.category,

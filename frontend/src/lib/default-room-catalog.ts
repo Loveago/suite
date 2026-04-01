@@ -1,12 +1,28 @@
 import { Property, Room } from '@/lib/api';
 
-export const roomCategoryOrder = ['Single room', '1 bedroom', '3 bedroom', '4 bedroom', 'Small', 'Medium', 'Large', 'VIP'];
+export const propertyCategoryOrder: Record<string, string[]> = {
+  'the-suite-tema': ['Small', 'Medium', 'Large', 'VIP'],
+  'kingstel-escape-accra': ['Single room', '1 bedroom', '3 bedroom', '4 bedroom'],
+};
+
+export const roomCategoryOrder = [...propertyCategoryOrder['kingstel-escape-accra'], ...propertyCategoryOrder['the-suite-tema']];
 
 const kingstelSharedAmenities =
   'Includes 8 plates, 4 tea cups, 4 serving plates, 6 bowls, 6 medium plates, 1 big cup, 4 beer glasses, 4 old fashioned glasses, 4 wine glasses, 6 champagne glasses, 8 forks, 8 knives, 4 spoons, 4 tea spoons, TV, chairs, AC, guest washroom, bathroom, microwave, kettle, blender, and heater.';
 
 const toRoomDisplayName = (category: string) =>
   /room|bedroom/i.test(category) ? category : `${category} Room`;
+
+export const getAllowedCategoriesForProperty = (propertySlug?: string) =>
+  propertyCategoryOrder[propertySlug || ''] || roomCategoryOrder;
+
+export const getCategoryOrderForProperty = (propertySlug?: string, categories?: string[]) => {
+  const allowedCategories = getAllowedCategoriesForProperty(propertySlug);
+  const availableCategories = categories || allowedCategories;
+  const availableCategorySet = new Set(availableCategories);
+
+  return allowedCategories.filter((category) => availableCategorySet.has(category));
+};
 
 export const defaultProperties: Property[] = [
   {
