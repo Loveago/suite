@@ -145,6 +145,7 @@ export default function Home() {
   const displayRooms = (propertyRooms.length > 0 ? propertyRooms : fallbackPropertyRooms).slice(0, 3);
   const heroImages = siteSettings.images.homeHeroImages.length > 0 ? siteSettings.images.homeHeroImages : defaultSiteSettings.images.homeHeroImages;
   const luxuryCtaImage = siteSettings.images.homeLuxuryCtaImage || defaultSiteSettings.images.homeLuxuryCtaImage;
+  const heroImageUrls = heroImages.map((image) => (image.startsWith('http') ? image : getImageUrl(image)));
 
   const handleSearch = () => {
     if (checkIn) setDates(checkIn, checkOut);
@@ -172,7 +173,7 @@ export default function Home() {
     <PageTransition>
       {/* Hero Section */}
       <section className="relative min-h-[78vh] sm:min-h-[88vh] overflow-hidden">
-        {heroImages.map((img, i) => (
+        {heroImageUrls.map((img, i) => (
           <motion.div
             key={i}
             className="absolute inset-0"
