@@ -82,7 +82,7 @@ function RoomsPageContent() {
   const groupedRooms = categoryOrder
     .map((category) => ({
       category,
-      rooms: filteredRooms.filter((room) => room.category === category),
+      rooms: filteredRooms.filter((room) => room.category === category).slice(0, 1),
     }))
     .filter((group) => group.rooms.length > 0);
 
