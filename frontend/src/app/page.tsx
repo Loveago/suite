@@ -141,8 +141,30 @@ export default function Home() {
 
   const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || properties[0] || defaultProperties[0];
   const propertyRooms = rooms.filter((room) => room.propertyId === selectedPropertyId);
+  const candidateRooms = rooms.length > 0 ? (propertyRooms.length > 0 ? propertyRooms : rooms) : [];
+  const representativeRoomsByCategory = Array.from(
+    candidateRooms
+      .reduce((acc, room) => {
+        const existing = acc.get(room.category);
+
+        if (!existing) {
+          acc.set(room.category, room);
+          return acc;
+        }
+
+        const existingHasUploadedImage = existing.images?.some((img) => img.startsWith('/uploads/'));
+        const roomHasUploadedImage = room.images?.some((img) => img.startsWith('/uploads/'));
+
+        if (roomHasUploadedImage && !existingHasUploadedImage) {
+          acc.set(room.category, room);
+        }
+
+        return acc;
+      }, new Map<string, Room>())
+      .values()
+  );
   const fallbackPropertyRooms = getDefaultRoomsForProperty(selectedPropertyId || selectedProperty.id, properties);
-  const displayRooms = (rooms.length > 0 ? (propertyRooms.length > 0 ? propertyRooms : rooms) : fallbackPropertyRooms).slice(0, 3);
+  const displayRooms = (representativeRoomsByCategory.length > 0 ? representativeRoomsByCategory : fallbackPropertyRooms).slice(0, 3);
   const heroImages = siteSettings.images.homeHeroImages.length > 0 ? siteSettings.images.homeHeroImages : defaultSiteSettings.images.homeHeroImages;
   const luxuryCtaImage = siteSettings.images.homeLuxuryCtaImage || defaultSiteSettings.images.homeLuxuryCtaImage;
   const heroImageUrls = heroImages.map((image) => (image.startsWith('http') ? image : getImageUrl(image)));
