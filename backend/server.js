@@ -16,15 +16,14 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true,
 }));
-app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.use('/api/rooms', roomRoutes);
-app.use('/api/bookings', bookingRoutes);
+app.use('/api/rooms', express.json(), roomRoutes);
+app.use('/api/bookings', express.json(), bookingRoutes);
 app.use('/api/upload', uploadRoutes);
-app.use('/api/gallery', galleryRoutes);
-app.use('/api/properties', propertyRoutes);
-app.use('/api/site-settings', siteSettingsRoutes);
+app.use('/api/gallery', express.json(), galleryRoutes);
+app.use('/api/properties', express.json(), propertyRoutes);
+app.use('/api/site-settings', express.json(), siteSettingsRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'THE SUITE API is running' });
