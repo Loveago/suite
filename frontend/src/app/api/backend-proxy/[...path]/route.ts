@@ -5,6 +5,12 @@ import { ADMIN_SESSION_COOKIE } from '@/lib/admin-auth';
 const BACKEND_API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 const METHODS_WITH_BODY = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
+export const runtime = 'nodejs';
+
+type NodeRequestInit = RequestInit & {
+  duplex?: 'half';
+};
+
 const buildTargetUrl = (path: string[], request: NextRequest) => {
   const normalizedBase = BACKEND_API_BASE.endsWith('/') ? BACKEND_API_BASE.slice(0, -1) : BACKEND_API_BASE;
   const target = new URL(`${normalizedBase}/${path.join('/')}`);
@@ -25,24 +31,43 @@ const forwardRequest = async (request: NextRequest, context: { params: Promise<{
 
   const targetUrl = buildTargetUrl(path, request);
   const contentType = request.headers.get('content-type');
+  const contentLength = request.headers.get('content-length');
   const headers = new Headers();
 
   if (contentType) {
     headers.set('content-type', contentType);
   }
 
+  if (contentLength) {
+    headers.set('content-length', contentLength);
+  }
+
   headers.set('cookie', `${ADMIN_SESSION_COOKIE}=${encodeURIComponent(sessionValue)}`);
 
-  const init: RequestInit = {
+  const init: NodeRequestInit = {
     method: request.method,
     headers,
   };
 
   if (METHODS_WITH_BODY.has(request.method)) {
-    init.body = await request.arrayBuffer();
+    init.body = request.body;
+    init.duplex = 'half';
   }
 
-  const upstreamResponse = await fetch(targetUrl, init);
+  let upstreamResponse: Response;
+
+  try {
+    upstreamResponse = await fetch(targetUrl, init);
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: 'Failed to reach backend service',
+        details: error instanceof Error ? error.message : 'Unknown proxy error',
+      },
+      { status: 502 }
+    );
+  }
+
   const responseHeaders = new Headers();
   const upstreamContentType = upstreamResponse.headers.get('content-type');
 
