@@ -109,6 +109,8 @@ const guestStories = [
 
 export default function Home() {
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [roomsLoaded, setRoomsLoaded] = useState(false);
+  const [roomsFetchFailed, setRoomsFetchFailed] = useState(false);
   const [properties, setProperties] = useState<Property[]>(defaultProperties);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [selectedPropertyId, setSelectedPropertyId] = useState('');
@@ -127,7 +129,19 @@ export default function Home() {
       }
     }).catch(() => setProperties(defaultProperties));
 
-    api.rooms.getAll().then(setRooms).catch(() => setRooms([]));
+    api.rooms
+      .getAll()
+      .then((data) => {
+        setRooms(data);
+        setRoomsFetchFailed(false);
+      })
+      .catch(() => {
+        setRooms([]);
+        setRoomsFetchFailed(true);
+      })
+      .finally(() => {
+        setRoomsLoaded(true);
+      });
     api.siteSettings.get().then(setSiteSettings).catch(() => setSiteSettings(defaultSiteSettings));
   }, []);
 
@@ -164,7 +178,12 @@ export default function Home() {
       .values()
   );
   const fallbackPropertyRooms = getDefaultRoomsForProperty(selectedPropertyId || selectedProperty.id, properties);
-  const displayRooms = (representativeRoomsByCategory.length > 0 ? representativeRoomsByCategory : fallbackPropertyRooms).slice(0, 3);
+  const displayRooms =
+    representativeRoomsByCategory.length > 0
+      ? representativeRoomsByCategory.slice(0, 3)
+      : roomsLoaded && roomsFetchFailed
+      ? fallbackPropertyRooms.slice(0, 3)
+      : [];
   const heroImages = siteSettings.images.homeHeroImages.length > 0 ? siteSettings.images.homeHeroImages : defaultSiteSettings.images.homeHeroImages;
   const luxuryCtaImage = siteSettings.images.homeLuxuryCtaImage || defaultSiteSettings.images.homeLuxuryCtaImage;
   const heroImageUrls = heroImages.map((image) => (image.startsWith('http') ? image : getImageUrl(image)));
