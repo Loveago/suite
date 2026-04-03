@@ -151,6 +151,15 @@ async function fetchAdminAPI<T>(endpoint: string, options?: RequestInit): Promis
   return res.json();
 }
 
+async function parseUploadResponse(res: Response): Promise<{ images: string[] }> {
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Upload failed' }));
+    throw new Error(error.error || error.details || 'Upload failed');
+  }
+
+  return res.json();
+}
+
 export const api = {
   properties: {
     getAll: () => fetchAPI<Property[]>('/properties'),
@@ -196,8 +205,7 @@ export const api = {
         credentials: 'include',
         body: formData,
       });
-      if (!res.ok) throw new Error('Upload failed');
-      return res.json();
+      return parseUploadResponse(res);
     },
     galleryImages: async (files: FileList): Promise<{ images: string[] }> => {
       const formData = new FormData();
@@ -207,8 +215,7 @@ export const api = {
         credentials: 'include',
         body: formData,
       });
-      if (!res.ok) throw new Error('Upload failed');
-      return res.json();
+      return parseUploadResponse(res);
     },
     siteImages: async (files: FileList): Promise<{ images: string[] }> => {
       const formData = new FormData();
@@ -218,8 +225,7 @@ export const api = {
         credentials: 'include',
         body: formData,
       });
-      if (!res.ok) throw new Error('Upload failed');
-      return res.json();
+      return parseUploadResponse(res);
     },
   },
   gallery: {

@@ -11,6 +11,19 @@ type NodeRequestInit = RequestInit & {
   duplex?: 'half';
 };
 
+const HOP_BY_HOP_HEADERS = new Set([
+  'connection',
+  'content-length',
+  'host',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+]);
+
 const buildTargetUrl = (path: string[], request: NextRequest) => {
   const normalizedBase = BACKEND_API_BASE.endsWith('/') ? BACKEND_API_BASE.slice(0, -1) : BACKEND_API_BASE;
   const target = new URL(`${normalizedBase}/${path.join('/')}`);
@@ -18,6 +31,20 @@ const buildTargetUrl = (path: string[], request: NextRequest) => {
     target.searchParams.append(key, value);
   });
   return target;
+};
+
+const buildUpstreamHeaders = (request: NextRequest, sessionValue: string) => {
+  const headers = new Headers();
+
+  request.headers.forEach((value, key) => {
+    if (!HOP_BY_HOP_HEADERS.has(key.toLowerCase())) {
+      headers.set(key, value);
+    }
+  });
+
+  headers.set('cookie', `${ADMIN_SESSION_COOKIE}=${encodeURIComponent(sessionValue)}`);
+
+  return headers;
 };
 
 const forwardRequest = async (request: NextRequest, context: { params: Promise<{ path: string[] }> }) => {
@@ -30,19 +57,9 @@ const forwardRequest = async (request: NextRequest, context: { params: Promise<{
   }
 
   const targetUrl = buildTargetUrl(path, request);
-  const contentType = request.headers.get('content-type');
-  const contentLength = request.headers.get('content-length');
-  const headers = new Headers();
-
-  if (contentType) {
-    headers.set('content-type', contentType);
-  }
-
-  if (contentLength) {
-    headers.set('content-length', contentLength);
-  }
-
-  headers.set('cookie', `${ADMIN_SESSION_COOKIE}=${encodeURIComponent(sessionValue)}`);
+  const headers = buildUpstreamHeaders(request, sessionValue);
+  const contentType = request.headers.get('content-type') || '';
+  const isMultipartRequest = contentType.toLowerCase().includes('multipart/form-data');
 
   const init: NodeRequestInit = {
     method: request.method,
@@ -50,8 +67,12 @@ const forwardRequest = async (request: NextRequest, context: { params: Promise<{
   };
 
   if (METHODS_WITH_BODY.has(request.method)) {
-    init.body = request.body;
-    init.duplex = 'half';
+    if (isMultipartRequest) {
+      init.body = await request.arrayBuffer();
+    } else {
+      init.body = request.body;
+      init.duplex = 'half';
+    }
   }
 
   let upstreamResponse: Response;
