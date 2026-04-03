@@ -111,7 +111,7 @@ export default function Home() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [properties, setProperties] = useState<Property[]>(defaultProperties);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
-  const [selectedPropertyId, setSelectedPropertyId] = useState(defaultProperties[0].id);
+  const [selectedPropertyId, setSelectedPropertyId] = useState('');
   const [heroIndex, setHeroIndex] = useState(0);
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
@@ -123,7 +123,7 @@ export default function Home() {
     api.properties.getAll().then((data) => {
       if (data.length > 0) {
         setProperties(data);
-        setSelectedPropertyId((current) => current || data[0].id);
+        setSelectedPropertyId((current) => (current ? current : data[0].id));
       }
     }).catch(() => setProperties(defaultProperties));
 
@@ -141,8 +141,8 @@ export default function Home() {
 
   const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || properties[0] || defaultProperties[0];
   const propertyRooms = rooms.filter((room) => room.propertyId === selectedPropertyId);
-  const fallbackPropertyRooms = getDefaultRoomsForProperty(selectedPropertyId);
-  const displayRooms = (propertyRooms.length > 0 ? propertyRooms : fallbackPropertyRooms).slice(0, 3);
+  const fallbackPropertyRooms = getDefaultRoomsForProperty(selectedPropertyId || selectedProperty.id, properties);
+  const displayRooms = (rooms.length > 0 ? (propertyRooms.length > 0 ? propertyRooms : rooms) : fallbackPropertyRooms).slice(0, 3);
   const heroImages = siteSettings.images.homeHeroImages.length > 0 ? siteSettings.images.homeHeroImages : defaultSiteSettings.images.homeHeroImages;
   const luxuryCtaImage = siteSettings.images.homeLuxuryCtaImage || defaultSiteSettings.images.homeLuxuryCtaImage;
   const heroImageUrls = heroImages.map((image) => (image.startsWith('http') ? image : getImageUrl(image)));

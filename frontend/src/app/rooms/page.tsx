@@ -19,7 +19,8 @@ function RoomsPageContent() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
   const [showFilter, setShowFilter] = useState(false);
   const [sortBy, setSortBy] = useState<'default' | 'price-low' | 'price-high'>('default');
-  const selectedPropertyId = searchParams.get('propertyId') || defaultProperties[0].id;
+  const selectedPropertyId = searchParams.get('propertyId') || '';
+  const isPropertySelected = selectedPropertyId.length > 0;
 
   useEffect(() => {
     api.properties.getAll().then((data) => setProperties(data.length > 0 ? data : defaultProperties)).catch(() => setProperties(defaultProperties));
@@ -27,20 +28,22 @@ function RoomsPageContent() {
 
   useEffect(() => {
     api.rooms
-      .getAll({ propertyId: selectedPropertyId })
+      .getAll(isPropertySelected ? { propertyId: selectedPropertyId } : undefined)
       .then((data) => {
-        setRooms(data.length > 0 ? data : getDefaultRoomsForProperty(selectedPropertyId));
+        setRooms(data);
         setLoading(false);
       })
       .catch(() => {
-        setRooms(getDefaultRoomsForProperty(selectedPropertyId));
+        setRooms(getDefaultRoomsForProperty(isPropertySelected ? selectedPropertyId : undefined, properties));
         setLoading(false);
       });
-  }, [selectedPropertyId]);
+  }, [isPropertySelected, selectedPropertyId, properties]);
 
-  const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || defaultProperties.find((property) => property.id === selectedPropertyId) || defaultProperties[0];
+  const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || defaultProperties.find((property) => property.id === selectedPropertyId);
 
-  const allowedCategories = getAllowedCategoriesForProperty(selectedProperty.slug);
+  const allowedCategories = isPropertySelected && selectedProperty
+    ? getAllowedCategoriesForProperty(selectedProperty.slug)
+    : Array.from(new Set(rooms.map((room) => room.category)));
 
   const filteredRooms = rooms
     .filter((room) => allowedCategories.includes(room.category))
@@ -57,7 +60,7 @@ function RoomsPageContent() {
       if (img.startsWith('http')) return img;
       return getImageUrl(img);
     }
-    return getDefaultRoomsForProperty(selectedPropertyId)[0]?.images[0] || defaultProperties[0].id;
+    return getDefaultRoomsForProperty(isPropertySelected ? selectedPropertyId : undefined, properties)[0]?.images[0] || '';
   };
 
   const handlePropertyChange = (propertyId: string) => {
@@ -66,10 +69,20 @@ function RoomsPageContent() {
     router.push(`/rooms?${nextParams.toString()}`);
   };
 
-  const groupedRooms = getCategoryOrderForProperty(selectedProperty.slug, filteredRooms.map((room) => room.category))
+  const clearPropertyFilter = () => {
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete('propertyId');
+    router.push(`/rooms${nextParams.toString() ? `?${nextParams.toString()}` : ''}`);
+  };
+
+  const categoryOrder = isPropertySelected && selectedProperty
+    ? getCategoryOrderForProperty(selectedProperty.slug, filteredRooms.map((room) => room.category))
+    : Array.from(new Set(filteredRooms.map((room) => room.category)));
+
+  const groupedRooms = categoryOrder
     .map((category) => ({
       category,
-      rooms: filteredRooms.filter((room) => room.category === category).slice(0, 1),
+      rooms: filteredRooms.filter((room) => room.category === category),
     }))
     .filter((group) => group.rooms.length > 0);
 
@@ -90,17 +103,29 @@ function RoomsPageContent() {
               Our Rooms
             </h1>
             <p className="text-gray-400 text-sm tracking-wide max-w-lg mx-auto text-center">
-              Explore each room category, room number, and nightly rate for {selectedProperty.name} in {selectedProperty.city}.
+              {selectedProperty
+                ? `Explore each room category, room number, and nightly rate for ${selectedProperty.name} in ${selectedProperty.city}.`
+                : 'Explore each room category, room number, and nightly rate across all properties.'}
             </p>
           </motion.div>
 
           <div className="mb-8 flex flex-wrap justify-center gap-3">
+            <button
+              onClick={clearPropertyFilter}
+              className={`rounded-full border px-5 py-2.5 text-sm transition-colors ${
+                !isPropertySelected
+                  ? 'border-gold bg-gold text-dark'
+                  : 'border-dark-border bg-dark-card text-gray-300 hover:border-gold/40 hover:text-gold'
+              }`}
+            >
+              All Properties
+            </button>
             {properties.map((property) => (
               <button
                 key={property.id}
                 onClick={() => handlePropertyChange(property.id)}
                 className={`rounded-full border px-5 py-2.5 text-sm transition-colors ${
-                  property.id === selectedPropertyId
+                  isPropertySelected && property.id === selectedPropertyId
                     ? 'border-gold bg-gold text-dark'
                     : 'border-dark-border bg-dark-card text-gray-300 hover:border-gold/40 hover:text-gold'
                 }`}
