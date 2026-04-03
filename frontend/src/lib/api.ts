@@ -1,6 +1,20 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 const ADMIN_PROXY_BASE = '/api/backend-proxy';
 
+const IMAGE_BASE = (() => {
+  const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  if (!configuredApiUrl) {
+    return 'http://localhost:5000';
+  }
+
+  try {
+    return new URL(configuredApiUrl).origin;
+  } catch {
+    return configuredApiUrl.replace(/\/api\/?$/, '');
+  }
+})();
+
 const toQueryString = (params?: Record<string, string | number | boolean | undefined>) => {
   if (!params) return '';
   const searchParams = new URLSearchParams();
@@ -240,8 +254,8 @@ export const api = {
 
 export const getImageUrl = (path: string) => {
   if (path.startsWith('http')) return path;
-  const base = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
-  return `${base}${path}`;
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${IMAGE_BASE}${normalizedPath}`;
 };
 
 export const formatCurrency = (amount: number) =>
