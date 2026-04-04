@@ -219,6 +219,8 @@ export default function Home() {
     siteSettings.images.homeLuxuryCtaImage
     || (siteSettingsLoaded && siteSettingsFetchFailed ? defaultSiteSettings.images.homeLuxuryCtaImage : '');
   const heroImageUrls = heroImages.map((image) => (image.startsWith('http') ? image : getImageUrl(image)));
+  const generalSettings = siteSettingsLoaded ? siteSettings.general : null;
+  const heroSecondaryPrefix = generalSettings?.homeHeroSecondaryText.split('THE SUITE')[0] || '';
 
   const handleSearch = () => {
     if (checkIn) setDates(checkIn, checkOut);
@@ -271,20 +273,20 @@ export default function Home() {
             className="text-center max-w-5xl"
           >
             <p className="mb-4 inline-flex items-center rounded-full border border-gold/35 bg-black/25 px-4 py-2 text-[11px] uppercase tracking-[0.3em] text-gold/90 backdrop-blur-md">
-              {siteSettings.general.siteTagline}
+              {generalSettings?.siteTagline || ''}
             </p>
             <h1 className="text-[clamp(3rem,7vw,6.4rem)] font-light text-white mb-1 leading-[0.92] tracking-[-0.04em] drop-shadow-[0_10px_40px_rgba(0,0,0,0.45)]">
-              {siteSettings.general.homeHeroPrimaryText}{' '}
-              <span className="italic font-serif text-gold-light">{siteSettings.general.homeHeroHighlightText}</span>
+              {generalSettings?.homeHeroPrimaryText || ''}{' '}
+              <span className="italic font-serif text-gold-light">{generalSettings?.homeHeroHighlightText || ''}</span>
             </h1>
             <h2 className="text-[clamp(2.2rem,5vw,4.8rem)] font-light text-white tracking-[-0.03em]">
-              {siteSettings.general.homeHeroSecondaryText.split('THE SUITE')[0] || ''}{' '}
+              {heroSecondaryPrefix}{' '}
               <span className="bg-gradient-to-r from-gold-light via-gold to-gold-dark bg-clip-text font-bold tracking-[0.14em] text-transparent">
-                {siteSettings.general.siteTitle}
+                {generalSettings?.siteTitle || ''}
               </span>
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-gray-200/85 sm:text-base">
-              {siteSettings.general.homeHeroDescription}
+              {generalSettings?.homeHeroDescription || ''}
             </p>
           </motion.div>
 
@@ -302,7 +304,7 @@ export default function Home() {
                   <p className="mt-1 text-sm text-gray-300">Choose your property, dates, and guests to explore the right rooms instantly.</p>
                 </div>
                 <div className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-emerald-200">
-                  {siteSettings.general.homeBookingBadge}
+                  {generalSettings?.homeBookingBadge || ''}
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-[1.1fr_1fr_1fr_0.8fr_auto] gap-3">
@@ -548,10 +550,10 @@ export default function Home() {
               className="bg-dark-card p-8 sm:p-10 lg:p-16 xl:p-20 flex flex-col justify-center"
             >
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light text-gold mb-4 sm:mb-5 font-serif italic leading-tight">
-                {siteSettings.general.homeCtaTitle}
+                {generalSettings?.homeCtaTitle || ''}
               </h2>
               <p className="text-gray-300 leading-relaxed mb-7 sm:mb-8 max-w-xl text-base sm:text-lg">
-                {siteSettings.general.homeCtaDescription}
+                {generalSettings?.homeCtaDescription || ''}
               </p>
               <Link href="/rooms">
                 <motion.button

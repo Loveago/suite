@@ -633,14 +633,46 @@ export default function AdminPage() {
 
   const sortedRoomGroups = categoryOrder
     .filter((category) => groupedRooms[category]?.length)
-    .map((category) => ({
-      category,
-      rooms: [...groupedRooms[category]]
-        .sort((a, b) => a.roomNumber.localeCompare(b.roomNumber, undefined, { numeric: true }))
-        .slice(0, 1),
-    }));
+    .map((category) => {
+      const categoryRooms = [...groupedRooms[category]].sort((a, b) =>
+        a.roomNumber.localeCompare(b.roomNumber, undefined, { numeric: true })
+      );
+      const bookedCount = categoryRooms.filter((room) => room.isBooked).length;
+
+      return {
+        category,
+        rooms: categoryRooms,
+        bookedCount,
+        availableCount: categoryRooms.length - bookedCount,
+      };
+    });
 
   const displayedCategoryCount = sortedRoomGroups.length;
+
+  useEffect(() => {
+    setCollapsedCategories((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      sortedRoomGroups.forEach((group) => {
+        if (next[group.category] === undefined) {
+          next[group.category] = true;
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [sortedRoomGroups.map((group) => group.category).join('|')]);
+
+  const setAllCategoryCollapse = (collapsed: boolean) => {
+    setCollapsedCategories(
+      sortedRoomGroups.reduce<Record<string, boolean>>((acc, group) => {
+        acc[group.category] = collapsed;
+        return acc;
+      }, {})
+    );
+  };
 
   const chooseProperty = (propertyId: string) => {
     if (!isMasterAdmin && propertyId !== selectedPropertyId) {
@@ -1001,16 +1033,32 @@ export default function AdminPage() {
               transition={{ duration: 0.3 }}
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl text-white font-semibold">Rooms ({displayedCategoryCount})</h2>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={openCreateModal}
-                  className="flex items-center gap-2 bg-gold hover:bg-gold-light text-dark font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
-                >
-                  <Plus size={16} />
-                  Add Room
-                </motion.button>
+                <h2 className="text-xl text-white font-semibold">Room Categories ({displayedCategoryCount})</h2>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAllCategoryCollapse(false)}
+                    className="h-9 rounded-lg border border-dark-border bg-dark-card px-3 text-xs font-semibold text-gray-300 transition-colors hover:border-gold/40 hover:text-gold"
+                  >
+                    Expand All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAllCategoryCollapse(true)}
+                    className="h-9 rounded-lg border border-dark-border bg-dark-card px-3 text-xs font-semibold text-gray-300 transition-colors hover:border-gold/40 hover:text-gold"
+                  >
+                    Collapse All
+                  </button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={openCreateModal}
+                    className="flex items-center gap-2 bg-gold hover:bg-gold-light text-dark font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+                  >
+                    <Plus size={16} />
+                    Add Room
+                  </motion.button>
+                </div>
               </div>
 
               {loading ? (
@@ -1060,7 +1108,7 @@ export default function AdminPage() {
                           </div>
                         </div>
                         <span className="text-sm text-gray-500">
-                          {group.rooms.length} room shown
+                          {group.availableCount} available · {group.bookedCount} booked · {group.rooms.length} total
                         </span>
                       </button>
 
