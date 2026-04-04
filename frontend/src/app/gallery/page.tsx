@@ -15,26 +15,19 @@ interface GallerySection {
 export default function GalleryPage() {
   const [selectedImage, setSelectedImage] = useState<{ url: string; caption?: string | null } | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [sections, setSections] = useState<GallerySection[]>(
-    defaultProperties.map((property) => ({
-      property,
-      images: fallbackGalleryImagesByProperty[property.slug].map((url, index) => ({
-        id: `${property.id}-fallback-${index}`,
-        url,
-      })),
-    }))
-  );
+  const [sections, setSections] = useState<GallerySection[]>([]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    Promise.all([
-      api.properties.getAll().catch(() => defaultProperties),
-      api.gallery.getAll().catch(() => [] as GalleryImage[]),
-    ]).then(([propertiesData, galleryData]) => {
+    Promise.allSettled([api.properties.getAll(), api.gallery.getAll()]).then(([propertiesResult, galleryResult]) => {
+      const propertiesData = propertiesResult.status === 'fulfilled' ? propertiesResult.value : [];
+      const galleryData = galleryResult.status === 'fulfilled' ? galleryResult.value : [];
+
       const properties = propertiesData.length > 0 ? propertiesData : defaultProperties;
+      const galleryFetchFailed = galleryResult.status === 'rejected';
 
       const nextSections = properties.map((property) => {
         const propertyImages = galleryData
@@ -45,22 +38,21 @@ export default function GalleryPage() {
             caption: image.caption,
           }));
 
+        const fallbackImages = galleryFetchFailed
+          ? (fallbackGalleryImagesByProperty[property.slug] || []).map((url, index) => ({
+              id: `${property.id}-fallback-${index}`,
+              url,
+            }))
+          : [];
+
         return {
           property,
-          images:
-            propertyImages.length > 0
-              ? propertyImages
-              : (fallbackGalleryImagesByProperty[property.slug] || []).map((url, index) => ({
-                  id: `${property.id}-fallback-${index}`,
-                  url,
-                })),
+          images: propertyImages.length > 0 ? propertyImages : fallbackImages,
         };
       });
 
       const propertyOrder = defaultProperties.map((property) => property.slug);
-      nextSections.sort(
-        (a, b) => propertyOrder.indexOf(a.property.slug) - propertyOrder.indexOf(b.property.slug)
-      );
+      nextSections.sort((a, b) => propertyOrder.indexOf(a.property.slug) - propertyOrder.indexOf(b.property.slug));
 
       setSections(nextSections);
     });

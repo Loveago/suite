@@ -31,13 +31,16 @@ const toRoomTypeLabel = (category: string) => (/room|bedroom/i.test(category) ? 
 export default function BookNowPage() {
   const router = useRouter();
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [roomsFetchFailed, setRoomsFetchFailed] = useState(false);
+  const [siteSettingsLoaded, setSiteSettingsLoaded] = useState(false);
+  const [siteSettingsFetchFailed, setSiteSettingsFetchFailed] = useState(false);
   const [properties, setProperties] = useState<Property[]>(defaultProperties);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState(1);
   const [backgroundIndex, setBackgroundIndex] = useState(0);
 
-  const [selectedPropertyId, setSelectedPropertyId] = useState(defaultProperties[0].id);
+  const [selectedPropertyId, setSelectedPropertyId] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
@@ -53,15 +56,50 @@ export default function BookNowPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.properties.getAll().then((data) => setProperties(data.length ? data : defaultProperties)).catch(() => setProperties(defaultProperties));
-    api.siteSettings.get().then(setSiteSettings).catch(() => setSiteSettings(defaultSiteSettings));
+    api.properties
+      .getAll()
+      .then((data) => {
+        const nextProperties = data.length ? data : defaultProperties;
+        setProperties(nextProperties);
+        setSelectedPropertyId((current) => (current ? current : nextProperties[0]?.id || ''));
+      })
+      .catch(() => {
+        setProperties(defaultProperties);
+        setSelectedPropertyId((current) => (current ? current : defaultProperties[0].id));
+      });
+
+    api.siteSettings
+      .get()
+      .then((data) => {
+        setSiteSettings(data);
+        setSiteSettingsFetchFailed(false);
+      })
+      .catch(() => {
+        setSiteSettings(defaultSiteSettings);
+        setSiteSettingsFetchFailed(true);
+      })
+      .finally(() => {
+        setSiteSettingsLoaded(true);
+      });
   }, []);
 
   useEffect(() => {
+    if (!selectedPropertyId) {
+      setRooms([]);
+      setRoomsFetchFailed(false);
+      return;
+    }
+
     api.rooms
       .getAll({ propertyId: selectedPropertyId })
-      .then((data) => setRooms(data.length ? data : getDefaultRoomsForProperty(selectedPropertyId, properties)))
-      .catch(() => setRooms(getDefaultRoomsForProperty(selectedPropertyId, properties)));
+      .then((data) => {
+        setRooms(data);
+        setRoomsFetchFailed(false);
+      })
+      .catch(() => {
+        setRooms(getDefaultRoomsForProperty(selectedPropertyId, properties));
+        setRoomsFetchFailed(true);
+      });
   }, [selectedPropertyId, properties]);
 
   useEffect(() => {
@@ -69,24 +107,35 @@ export default function BookNowPage() {
   }, [selectedPropertyId]);
 
   useEffect(() => {
-    const backgroundImages = siteSettings.images.bookNowBackgroundImages.length > 0
-      ? siteSettings.images.bookNowBackgroundImages
-      : defaultSiteSettings.images.bookNowBackgroundImages;
+    const resolvedBackgroundImages =
+      siteSettings.images.bookNowBackgroundImages.length > 0
+        ? siteSettings.images.bookNowBackgroundImages
+        : siteSettingsLoaded && siteSettingsFetchFailed
+        ? defaultSiteSettings.images.bookNowBackgroundImages
+        : [];
+
+    if (resolvedBackgroundImages.length === 0) {
+      return undefined;
+    }
 
     const interval = setInterval(() => {
-      setBackgroundIndex((prev) => (prev + 1) % backgroundImages.length);
+      setBackgroundIndex((prev) => (prev + 1) % resolvedBackgroundImages.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [siteSettings.images.bookNowBackgroundImages]);
+  }, [siteSettings.images.bookNowBackgroundImages, siteSettingsLoaded, siteSettingsFetchFailed]);
 
   const selectedProperty = resolvePropertyFromCollection(properties, selectedPropertyId);
   const bookingPropertyId = properties.find((property) => property.slug === selectedProperty.slug)?.id || selectedProperty.id;
-  const backgroundImages = siteSettings.images.bookNowBackgroundImages.length > 0
-    ? siteSettings.images.bookNowBackgroundImages
-    : defaultSiteSettings.images.bookNowBackgroundImages;
+  const backgroundImages =
+    siteSettings.images.bookNowBackgroundImages.length > 0
+      ? siteSettings.images.bookNowBackgroundImages
+      : siteSettingsLoaded && siteSettingsFetchFailed
+      ? defaultSiteSettings.images.bookNowBackgroundImages
+      : [];
   const allowedCategories = getAllowedCategoriesForProperty(selectedProperty.slug);
-  const visibleRooms = rooms.filter((room) => allowedCategories.includes(room.category));
+  const visibleRooms = (roomsFetchFailed ? getDefaultRoomsForProperty(selectedPropertyId, properties) : rooms)
+    .filter((room) => allowedCategories.includes(room.category));
   const categories = getCategoryOrderForProperty(selectedProperty.slug, visibleRooms.map((room) => room.category));
   const roomsInSelectedCategory = visibleRooms.filter((room) => room.category === selectedCategory);
   const selectedCategoryPrice = roomsInSelectedCategory[0]?.price || 0;
@@ -276,7 +325,7 @@ export default function BookNowPage() {
                       >
                         <option value="">Select a room category</option>
                         {categories.map((category) => {
-                          const categoryRoom = rooms.find((room) => room.category === category);
+                          const categoryRoom = visibleRooms.find((room) => room.category === category);
                           return (
                             <option key={category} value={category}>
                               {toRoomTypeLabel(category)} — {categoryRoom ? `${formatCurrency(categoryRoom.price)}/night` : ''}

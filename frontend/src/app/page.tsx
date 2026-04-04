@@ -113,6 +113,8 @@ export default function Home() {
   const [roomsFetchFailed, setRoomsFetchFailed] = useState(false);
   const [properties, setProperties] = useState<Property[]>(defaultProperties);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
+  const [siteSettingsLoaded, setSiteSettingsLoaded] = useState(false);
+  const [siteSettingsFetchFailed, setSiteSettingsFetchFailed] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState('');
   const [heroIndex, setHeroIndex] = useState(0);
   const [checkIn, setCheckIn] = useState('');
@@ -142,16 +144,39 @@ export default function Home() {
       .finally(() => {
         setRoomsLoaded(true);
       });
-    api.siteSettings.get().then(setSiteSettings).catch(() => setSiteSettings(defaultSiteSettings));
+    api.siteSettings
+      .get()
+      .then((data) => {
+        setSiteSettings(data);
+        setSiteSettingsFetchFailed(false);
+      })
+      .catch(() => {
+        setSiteSettings(defaultSiteSettings);
+        setSiteSettingsFetchFailed(true);
+      })
+      .finally(() => {
+        setSiteSettingsLoaded(true);
+      });
   }, []);
 
   useEffect(() => {
-    const heroImages = siteSettings.images.homeHeroImages.length > 0 ? siteSettings.images.homeHeroImages : defaultSiteSettings.images.homeHeroImages;
+    const resolvedHeroImages =
+      siteSettings.images.homeHeroImages.length > 0
+        ? siteSettings.images.homeHeroImages
+        : siteSettingsLoaded && siteSettingsFetchFailed
+        ? defaultSiteSettings.images.homeHeroImages
+        : [];
+
+    if (resolvedHeroImages.length === 0) {
+      return undefined;
+    }
+
     const interval = setInterval(() => {
-      setHeroIndex((prev) => (prev + 1) % heroImages.length);
+      setHeroIndex((prev) => (prev + 1) % resolvedHeroImages.length);
     }, 5000);
+
     return () => clearInterval(interval);
-  }, [siteSettings.images.homeHeroImages]);
+  }, [siteSettings.images.homeHeroImages, siteSettingsLoaded, siteSettingsFetchFailed]);
 
   const selectedProperty = properties.find((property) => property.id === selectedPropertyId) || properties[0] || defaultProperties[0];
   const propertyRooms = rooms.filter((room) => room.propertyId === selectedPropertyId);
@@ -184,8 +209,15 @@ export default function Home() {
       : roomsLoaded && roomsFetchFailed
       ? fallbackPropertyRooms.slice(0, 3)
       : [];
-  const heroImages = siteSettings.images.homeHeroImages.length > 0 ? siteSettings.images.homeHeroImages : defaultSiteSettings.images.homeHeroImages;
-  const luxuryCtaImage = siteSettings.images.homeLuxuryCtaImage || defaultSiteSettings.images.homeLuxuryCtaImage;
+  const heroImages =
+    siteSettings.images.homeHeroImages.length > 0
+      ? siteSettings.images.homeHeroImages
+      : siteSettingsLoaded && siteSettingsFetchFailed
+      ? defaultSiteSettings.images.homeHeroImages
+      : [];
+  const luxuryCtaImage =
+    siteSettings.images.homeLuxuryCtaImage
+    || (siteSettingsLoaded && siteSettingsFetchFailed ? defaultSiteSettings.images.homeLuxuryCtaImage : '');
   const heroImageUrls = heroImages.map((image) => (image.startsWith('http') ? image : getImageUrl(image)));
 
   const handleSearch = () => {
