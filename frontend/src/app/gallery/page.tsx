@@ -16,6 +16,7 @@ export default function GalleryPage() {
   const [selectedImage, setSelectedImage] = useState<{ url: string; caption?: string | null } | null>(null);
   const [mounted, setMounted] = useState(false);
   const [sections, setSections] = useState<GallerySection[]>([]);
+  const [galleryLoaded, setGalleryLoaded] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -55,6 +56,7 @@ export default function GalleryPage() {
       nextSections.sort((a, b) => propertyOrder.indexOf(a.property.slug) - propertyOrder.indexOf(b.property.slug));
 
       setSections(nextSections);
+      setGalleryLoaded(true);
     });
   }, []);
 
@@ -88,54 +90,69 @@ export default function GalleryPage() {
           </motion.div>
 
           <div className="space-y-14">
-            {sections.map((section, sectionIndex) => (
-              <section key={section.property.id}>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: sectionIndex * 0.08 }}
-                  className="mb-6 text-center sm:text-left"
-                >
-                  <p className="mb-2 text-xs uppercase tracking-[0.28em] text-gold/70">Property</p>
-                  <h2 className="text-3xl sm:text-4xl font-light text-white font-serif italic">
-                    {section.property.name} <span className="text-gold">· {section.property.city}</span>
-                  </h2>
-                  <p className="mt-3 max-w-3xl text-sm text-gray-400">
-                    {section.property.description || `Explore ${section.property.name} in ${section.property.city}.`}
-                  </p>
-                </motion.div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {section.images.map((image, index) => (
+            {!galleryLoaded
+              ? [1, 2].map((section) => (
+                  <section key={`gallery-skeleton-${section}`}>
+                    <div className="mb-6 text-center sm:text-left">
+                      <div className="h-3 w-24 bg-dark-border rounded animate-pulse mb-3 mx-auto sm:mx-0" />
+                      <div className="h-9 w-72 bg-dark-border rounded animate-pulse mb-3 mx-auto sm:mx-0" />
+                      <div className="h-4 w-full max-w-2xl bg-dark-border rounded animate-pulse mx-auto sm:mx-0" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                      {[1, 2, 3].map((card) => (
+                        <div key={`gallery-card-skeleton-${section}-${card}`} className="aspect-[4/3] rounded-2xl border border-dark-border bg-dark-card animate-pulse" />
+                      ))}
+                    </div>
+                  </section>
+                ))
+              : sections.map((section, sectionIndex) => (
+                  <section key={section.property.id}>
                     <motion.div
-                      key={image.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.05 }}
-                      whileHover={{ y: -8 }}
-                      className="group relative aspect-[4/3] overflow-hidden rounded-2xl border border-dark-border bg-dark-card cursor-pointer"
-                      onClick={() => setSelectedImage({ url: image.url, caption: image.caption })}
+                      transition={{ duration: 0.5, delay: sectionIndex * 0.08 }}
+                      className="mb-6 text-center sm:text-left"
                     >
-                      <div
-                        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                        style={{ backgroundImage: `url(${image.url})` }}
-                      />
-                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-300" />
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="w-14 h-14 rounded-full bg-gold/90 flex items-center justify-center">
-                          <Camera className="w-6 h-6 text-dark" />
-                        </div>
-                      </div>
-                      {image.caption && (
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-4 py-3">
-                          <p className="text-sm text-white">{image.caption}</p>
-                        </div>
-                      )}
+                      <p className="mb-2 text-xs uppercase tracking-[0.28em] text-gold/70">Property</p>
+                      <h2 className="text-3xl sm:text-4xl font-light text-white font-serif italic">
+                        {section.property.name} <span className="text-gold">· {section.property.city}</span>
+                      </h2>
+                      <p className="mt-3 max-w-3xl text-sm text-gray-400">
+                        {section.property.description || `Explore ${section.property.name} in ${section.property.city}.`}
+                      </p>
                     </motion.div>
-                  ))}
-                </div>
-              </section>
-            ))}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                      {section.images.map((image, index) => (
+                        <motion.div
+                          key={image.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, delay: index * 0.05 }}
+                          whileHover={{ y: -8 }}
+                          className="group relative aspect-[4/3] overflow-hidden rounded-2xl border border-dark-border bg-dark-card cursor-pointer"
+                          onClick={() => setSelectedImage({ url: image.url, caption: image.caption })}
+                        >
+                          <div
+                            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                            style={{ backgroundImage: `url(${image.url})` }}
+                          />
+                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-300" />
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div className="w-14 h-14 rounded-full bg-gold/90 flex items-center justify-center">
+                              <Camera className="w-6 h-6 text-dark" />
+                            </div>
+                          </div>
+                          {image.caption && (
+                            <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-4 py-3">
+                              <p className="text-sm text-white">{image.caption}</p>
+                            </div>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  </section>
+                ))}
           </div>
         </div>
 

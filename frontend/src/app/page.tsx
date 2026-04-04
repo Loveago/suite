@@ -393,43 +393,54 @@ export default function Home() {
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {displayRooms.map((room, i) => (
-              <motion.div
-                key={room.id}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-50px' }}
-                transition={{ duration: 0.5, delay: i * 0.15 }}
-              >
-                <Link href={rooms.length > 0 ? `/rooms/${room.id}` : '/rooms'}>
+            {displayRooms.length === 0 && !roomsLoaded
+              ? [1, 2, 3].map((i) => (
+                  <div key={`room-skeleton-${i}`} className="bg-dark-card border border-dark-border rounded-xl overflow-hidden">
+                    <div className="h-56 sm:h-64 bg-dark-border animate-pulse" />
+                    <div className="p-5 space-y-3">
+                      <div className="h-5 bg-dark-border rounded animate-pulse w-2/3" />
+                      <div className="h-4 bg-dark-border rounded animate-pulse w-1/3" />
+                      <div className="h-8 bg-dark-border rounded animate-pulse w-1/2" />
+                    </div>
+                  </div>
+                ))
+              : displayRooms.map((room, i) => (
                   <motion.div
-                    whileHover={{ y: -8, scale: 1.02 }}
-                    transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                    className="bg-dark-card border border-dark-border rounded-xl overflow-hidden group cursor-pointer"
+                    key={room.id}
+                    initial={{ opacity: 0, y: 40 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-50px' }}
+                    transition={{ duration: 0.5, delay: i * 0.15 }}
                   >
-                    <div className="relative h-56 sm:h-64 overflow-hidden">
-                      <div
-                        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                        style={{ backgroundImage: getRoomImageLayer(room, i) }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    </div>
-                    <div className="p-5">
-                      <h3 className="text-lg font-semibold text-white mb-1">{room.name}</h3>
-                      <p className="text-gold text-sm mb-4">
-                        From {formatCurrency(room.price)} / Night
-                      </p>
+                    <Link href={rooms.length > 0 ? `/rooms/${room.id}` : '/rooms'}>
                       <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        className="inline-block bg-gold/10 border border-gold text-gold text-xs font-medium px-4 py-2 rounded-lg hover:bg-gold hover:text-dark transition-all duration-300"
+                        whileHover={{ y: -8, scale: 1.02 }}
+                        transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                        className="bg-dark-card border border-dark-border rounded-xl overflow-hidden group cursor-pointer"
                       >
-                        View Details
+                        <div className="relative h-56 sm:h-64 overflow-hidden">
+                          <div
+                            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                            style={{ backgroundImage: getRoomImageLayer(room, i) }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                        </div>
+                        <div className="p-5">
+                          <h3 className="text-lg font-semibold text-white mb-1">{room.name}</h3>
+                          <p className="text-gold text-sm mb-4">
+                            From {formatCurrency(room.price)} / Night
+                          </p>
+                          <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            className="inline-block bg-gold/10 border border-gold text-gold text-xs font-medium px-4 py-2 rounded-lg hover:bg-gold hover:text-dark transition-all duration-300"
+                          >
+                            View Details
+                          </motion.div>
+                        </div>
                       </motion.div>
-                    </div>
+                    </Link>
                   </motion.div>
-                </Link>
-              </motion.div>
-            ))}
+                ))}
           </div>
         </div>
       </section>
