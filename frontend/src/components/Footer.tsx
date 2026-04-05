@@ -20,8 +20,8 @@ export default function Footer() {
               whileHover={{ scale: 1.03, y: -1 }}
               transition={{ type: 'spring', stiffness: 260, damping: 18 }}
             >
-              <span className="text-gold/70 text-base not-italic tracking-[0.2em]">THE</span>
-              <span>SUITE</span>
+              <span className="text-gold/70 text-base not-italic tracking-[0.2em]">KINGSTEL</span>
+              <span>AIRBNB</span>
             </motion.h3>
             <p className="text-gray-400 text-sm leading-relaxed max-w-md">
               Experience luxury redefined. Premium rooms, world-class amenities,
@@ -84,7 +84,7 @@ export default function Footer() {
 
         <div className="mt-8 pt-5 border-t border-dark-border/80 text-center">
           <p className="text-gray-500 text-xs">
-            &copy; {new Date().getFullYear()} THE SUITE. All rights reserved.
+            &copy; {new Date().getFullYear()} KINGSTEL AIRBNB. All rights reserved.
           </p>
         </div>
       </div>
