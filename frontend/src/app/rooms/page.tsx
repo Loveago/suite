@@ -84,12 +84,14 @@ function RoomsPageContent() {
       const categoryRooms = filteredRooms
         .filter((room) => room.category === category)
         .sort((a, b) => a.roomNumber.localeCompare(b.roomNumber, undefined, { numeric: true }));
-      const displayRoom = categoryRooms.find((room) => !room.isBooked) || categoryRooms[0];
+      const displayRoom = categoryRooms[0];
+      const isCategoryBooked = categoryRooms.length > 0 && categoryRooms.every((room) => room.isBooked);
 
       return {
         category,
         rooms: categoryRooms,
         displayRoom,
+        isCategoryBooked,
       };
     })
     .filter((group) => Boolean(group.displayRoom));
@@ -278,18 +280,24 @@ function RoomsPageContent() {
                           exit={{ opacity: 0, scale: 0.97 }}
                           transition={{ duration: 0.35, delay: roomIndex * 0.04 }}
                         >
-                          <Link href={`/rooms/${room.id}`}>
+                          <Link
+                            href={
+                              group.isCategoryBooked
+                                ? `/rooms/${room.id}`
+                                : `/book-now?propertyId=${encodeURIComponent(room.propertyId)}&category=${encodeURIComponent(group.category)}`
+                            }
+                          >
                             <motion.div
-                              whileHover={room.isBooked ? undefined : { y: -8, scale: 1.01 }}
+                              whileHover={group.isCategoryBooked ? undefined : { y: -8, scale: 1.01 }}
                               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                               className={`bg-dark-card border rounded-2xl overflow-hidden group h-full ${
-                                room.isBooked ? 'border-red-500/30 opacity-80' : 'border-dark-border cursor-pointer'
+                                group.isCategoryBooked ? 'border-red-500/30 opacity-80' : 'border-dark-border cursor-pointer'
                               }`}
                             >
                               <div className="relative h-56 sm:h-64 overflow-hidden">
                                 <div
                                   className={`absolute inset-0 bg-cover bg-center transition-transform duration-700 ${
-                                    room.isBooked ? '' : 'group-hover:scale-110'
+                                    group.isCategoryBooked ? '' : 'group-hover:scale-110'
                                   }`}
                                   style={{ backgroundImage: `url(${getRoomImage(room)})` }}
                                 />
@@ -302,12 +310,12 @@ function RoomsPageContent() {
                                 </div>
                                 <div
                                   className={`absolute bottom-3 left-3 text-xs font-semibold px-3 py-1.5 rounded-full border ${
-                                    room.isBooked
+                                    group.isCategoryBooked
                                       ? 'bg-red-500/20 text-red-200 border-red-400/40'
                                       : 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40'
                                   }`}
                                 >
-                                  {room.isBooked ? 'Booked' : 'Available'}
+                                  {group.isCategoryBooked ? 'Booked' : 'Available'}
                                 </div>
                               </div>
                               <div className="p-5">
@@ -319,14 +327,14 @@ function RoomsPageContent() {
                                 <div className="flex items-center justify-between gap-4">
                                   <span className="text-gray-500 text-xs">Images: {room.images.length}</span>
                                   <motion.div
-                                    whileHover={room.isBooked ? undefined : { scale: 1.04 }}
+                                    whileHover={group.isCategoryBooked ? undefined : { scale: 1.04 }}
                                     className={`inline-block text-xs font-medium px-4 py-2 rounded-lg transition-all duration-300 ${
-                                      room.isBooked
+                                      group.isCategoryBooked
                                         ? 'bg-red-500/10 border border-red-400/40 text-red-200'
                                         : 'bg-gold/10 border border-gold text-gold hover:bg-gold hover:text-dark'
                                     }`}
                                   >
-                                    {room.isBooked ? 'View Details' : 'Book Room'}
+                                    {group.isCategoryBooked ? 'View Details' : 'Book Room'}
                                   </motion.div>
                                 </div>
                               </div>
