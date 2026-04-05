@@ -59,6 +59,25 @@ const placeholderRooms = [
   },
 ];
 
+const emptySiteSettings: SiteSettings = {
+  general: {
+    siteTitle: '',
+    siteTagline: '',
+    homeHeroPrimaryText: '',
+    homeHeroHighlightText: '',
+    homeHeroSecondaryText: '',
+    homeHeroDescription: '',
+    homeBookingBadge: '',
+    homeCtaTitle: '',
+    homeCtaDescription: '',
+  },
+  images: {
+    homeHeroImages: [],
+    homeLuxuryCtaImage: '',
+    bookNowBackgroundImages: [],
+  },
+};
+
 const luxuryHighlights = [
   {
     icon: ShieldCheck,
@@ -112,7 +131,7 @@ export default function Home() {
   const [roomsLoaded, setRoomsLoaded] = useState(false);
   const [roomsFetchFailed, setRoomsFetchFailed] = useState(false);
   const [properties, setProperties] = useState<Property[]>(defaultProperties);
-  const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(emptySiteSettings);
   const [siteSettingsLoaded, setSiteSettingsLoaded] = useState(false);
   const [siteSettingsFetchFailed, setSiteSettingsFetchFailed] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState('');
