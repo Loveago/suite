@@ -15,10 +15,13 @@ const buildAvailableRoomWhere = ({ propertyId, roomCategory, unavailableRoomIds 
 });
 
 const syncRoomBookedStatus = async (roomId) => {
+  const now = new Date();
   const activeBooking = await prisma.booking.findFirst({
     where: {
       roomId,
       status: { in: ACTIVE_BOOKING_STATUSES },
+      checkIn: { lt: now },
+      checkOut: { gt: now },
     },
     select: { id: true },
   });

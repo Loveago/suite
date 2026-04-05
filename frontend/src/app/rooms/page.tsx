@@ -80,11 +80,19 @@ function RoomsPageContent() {
     : Array.from(new Set(filteredRooms.map((room) => room.category)));
 
   const groupedRooms = categoryOrder
-    .map((category) => ({
-      category,
-      rooms: filteredRooms.filter((room) => room.category === category).slice(0, 1),
-    }))
-    .filter((group) => group.rooms.length > 0);
+    .map((category) => {
+      const categoryRooms = filteredRooms
+        .filter((room) => room.category === category)
+        .sort((a, b) => a.roomNumber.localeCompare(b.roomNumber, undefined, { numeric: true }));
+      const displayRoom = categoryRooms.find((room) => !room.isBooked) || categoryRooms[0];
+
+      return {
+        category,
+        rooms: categoryRooms,
+        displayRoom,
+      };
+    })
+    .filter((group) => Boolean(group.displayRoom));
 
   const displayedRoomCount = groupedRooms.length;
 
@@ -261,7 +269,7 @@ function RoomsPageContent() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8">
-                      {group.rooms.map((room, roomIndex) => (
+                      {[group.displayRoom].map((room, roomIndex) => (
                         <motion.div
                           key={room.id}
                           layout
