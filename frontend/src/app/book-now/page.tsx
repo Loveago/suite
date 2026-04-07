@@ -7,7 +7,7 @@ import PageTransition from '@/components/PageTransition';
 import PriceWithUsd from '@/components/PriceWithUsd';
 import { api, defaultSiteSettings, Property, Room, SiteSettings, formatCurrency, getImageUrl } from '@/lib/api';
 import { defaultProperties, getAllowedCategoriesForProperty, getCategoryOrderForProperty, getDefaultRoomsForProperty, resolvePropertyFromCollection } from '@/lib/default-room-catalog';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const STEPS = [
   { id: 1, label: 'Room & Dates', icon: Calendar },
@@ -30,6 +30,7 @@ const toRoomTypeLabel = (category: string) => (/room|bedroom/i.test(category) ? 
 
 export default function BookNowPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [roomsFetchFailed, setRoomsFetchFailed] = useState(false);
   const [siteSettingsLoaded, setSiteSettingsLoaded] = useState(false);
@@ -54,6 +55,37 @@ export default function BookNowPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const propertyIdFromQuery = searchParams.get('propertyId') || '';
+    const categoryFromQuery = searchParams.get('category') || '';
+    const checkInFromQuery = searchParams.get('checkIn') || '';
+    const checkOutFromQuery = searchParams.get('checkOut') || '';
+    const guestsFromQuery = searchParams.get('guests') || '';
+
+    if (propertyIdFromQuery) {
+      setSelectedPropertyId(propertyIdFromQuery);
+    }
+
+    if (checkInFromQuery) {
+      setCheckIn(checkInFromQuery);
+    }
+
+    if (checkOutFromQuery) {
+      setCheckOut(checkOutFromQuery);
+    }
+
+    if (guestsFromQuery) {
+      const parsedGuests = Number(guestsFromQuery);
+      if (Number.isFinite(parsedGuests) && parsedGuests > 0) {
+        setNumGuests(parsedGuests);
+      }
+    }
+
+    if (categoryFromQuery) {
+      setSelectedCategory(categoryFromQuery);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     api.properties
@@ -103,8 +135,11 @@ export default function BookNowPage() {
   }, [selectedPropertyId, properties]);
 
   useEffect(() => {
+    if (searchParams.get('category')) {
+      return;
+    }
     setSelectedCategory('');
-  }, [selectedPropertyId]);
+  }, [selectedPropertyId, searchParams]);
 
   useEffect(() => {
     const resolvedBackgroundImages =

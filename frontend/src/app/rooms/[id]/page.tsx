@@ -138,12 +138,13 @@ export default function RoomDetailPage() {
   const router = useRouter();
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
+  const [categoryRooms, setCategoryRooms] = useState<Room[]>([]);
   const [currentImage, setCurrentImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState(2);
-  const { setRoom: setStoreRoom, setDates, setGuests: setStoreGuests } = useBookingStore();
+  const { setDates, setGuests: setStoreGuests } = useBookingStore();
 
   useEffect(() => {
     if (params.id) {
@@ -161,6 +162,22 @@ export default function RoomDetailPage() {
     }
   }, [params.id]);
 
+  useEffect(() => {
+    if (!room) {
+      setCategoryRooms([]);
+      return;
+    }
+
+    api.rooms
+      .getAll({ propertyId: room.propertyId })
+      .then((data) => {
+        setCategoryRooms(data.filter((item) => item.category === room.category));
+      })
+      .catch(() => {
+        setCategoryRooms([]);
+      });
+  }, [room]);
+
   const images =
     room?.images && room.images.length > 0
       ? room.images.map((img) => (img.startsWith('http') ? img : getImageUrl(img)))
@@ -175,12 +192,19 @@ export default function RoomDetailPage() {
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   };
 
+  const isCategoryBooked = categoryRooms.length > 0 && categoryRooms.every((item) => item.isBooked);
+
   const handleBookNow = () => {
-    if (!room || room.isBooked) return;
-    setStoreRoom(room.id, room.name, room.price, room.category, room.propertyId);
+    if (!room || isCategoryBooked) return;
     if (checkIn && checkOut) setDates(checkIn, checkOut);
     setStoreGuests(guests);
-    router.push('/booking');
+    const nextParams = new URLSearchParams();
+    nextParams.set('propertyId', room.propertyId);
+    nextParams.set('category', room.category);
+    if (checkIn) nextParams.set('checkIn', checkIn);
+    if (checkOut) nextParams.set('checkOut', checkOut);
+    if (guests) nextParams.set('guests', String(guests));
+    router.push(`/book-now?${nextParams.toString()}`);
   };
 
   if (loading) {
@@ -326,12 +350,12 @@ export default function RoomDetailPage() {
 
             <div
               className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border mb-6 ${
-                room.isBooked
+                isCategoryBooked
                   ? 'bg-red-500/15 text-red-200 border-red-400/35'
                   : 'bg-emerald-500/15 text-emerald-200 border-emerald-400/35'
               }`}
             >
-              {room.isBooked ? 'Booked - unavailable right now' : 'Available for booking'}
+              {isCategoryBooked ? 'Booked - unavailable right now' : 'Available for booking'}
             </div>
 
             <div className="prose prose-invert max-w-none mb-8">
@@ -369,9 +393,9 @@ export default function RoomDetailPage() {
             <div className="bg-dark-card border border-dark-border rounded-xl p-6">
               <h3 className="text-white font-semibold mb-4 text-lg">Reserve This Room</h3>
               <div className="space-y-4">
-                {room.isBooked && (
+                {isCategoryBooked && (
                   <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                    This room is already booked. Please choose another room.
+                    This room category is fully booked right now. Please choose another room.
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-3">
@@ -382,7 +406,7 @@ export default function RoomDetailPage() {
                       value={checkIn}
                       onChange={(e) => setCheckIn(e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
-                      disabled={room.isBooked}
+                      disabled={isCategoryBooked}
                       className="w-full bg-dark border border-dark-border rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-gold transition-colors"
                     />
                   </div>
@@ -393,7 +417,7 @@ export default function RoomDetailPage() {
                       value={checkOut}
                       onChange={(e) => setCheckOut(e.target.value)}
                       min={checkIn || new Date().toISOString().split('T')[0]}
-                      disabled={room.isBooked}
+                      disabled={isCategoryBooked}
                       className="w-full bg-dark border border-dark-border rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-gold transition-colors"
                     />
                   </div>
@@ -403,7 +427,7 @@ export default function RoomDetailPage() {
                   <select
                     value={guests}
                     onChange={(e) => setGuests(Number(e.target.value))}
-                    disabled={room.isBooked}
+                    disabled={isCategoryBooked}
                     className="w-full bg-dark border border-dark-border rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-gold transition-colors cursor-pointer"
                   >
                     {[1, 2, 3, 4, 5, 6].map((n) => (
@@ -434,17 +458,17 @@ export default function RoomDetailPage() {
                 )}
 
                 <motion.button
-                  whileHover={room.isBooked ? undefined : { scale: 1.02 }}
-                  whileTap={room.isBooked ? undefined : { scale: 0.98 }}
+                  whileHover={isCategoryBooked ? undefined : { scale: 1.02 }}
+                  whileTap={isCategoryBooked ? undefined : { scale: 0.98 }}
                   onClick={handleBookNow}
-                  disabled={room.isBooked}
+                  disabled={isCategoryBooked}
                   className={`w-full font-semibold py-3 rounded-lg transition-colors duration-300 text-sm tracking-wide mt-2 ${
-                    room.isBooked
+                    isCategoryBooked
                       ? 'bg-dark border border-red-500/30 text-red-200 cursor-not-allowed'
                       : 'bg-gold hover:bg-gold-light text-dark'
                   }`}
                 >
-                  {room.isBooked ? 'Room Unavailable' : 'Book Now'}
+                  {isCategoryBooked ? 'Room Unavailable' : 'Book Now'}
                 </motion.button>
               </div>
             </div>
@@ -469,17 +493,17 @@ export default function RoomDetailPage() {
             )}
           </div>
           <motion.button
-            whileHover={room.isBooked ? undefined : { scale: 1.05 }}
-            whileTap={room.isBooked ? undefined : { scale: 0.95 }}
+            whileHover={isCategoryBooked ? undefined : { scale: 1.05 }}
+            whileTap={isCategoryBooked ? undefined : { scale: 0.95 }}
             onClick={handleBookNow}
-            disabled={room.isBooked}
+            disabled={isCategoryBooked}
             className={`font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm ${
-              room.isBooked
+              isCategoryBooked
                 ? 'bg-dark border border-red-500/30 text-red-200 cursor-not-allowed'
                 : 'bg-gold hover:bg-gold-light text-dark'
             }`}
           >
-            {room.isBooked ? 'Unavailable' : 'Book Now'}
+            {isCategoryBooked ? 'Unavailable' : 'Book Now'}
           </motion.button>
         </div>
       </motion.div>
