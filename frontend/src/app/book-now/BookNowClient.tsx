@@ -207,7 +207,7 @@ export default function BookNowClient() {
     setError('');
     setSubmitting(true);
     try {
-      await api.bookings.create({
+      const booking = await api.bookings.create({
         roomCategory: selectedCategory,
         propertyId: bookingPropertyId,
         checkIn,
@@ -217,7 +217,10 @@ export default function BookNowClient() {
         guestPhone: phone,
         guests: numGuests,
       });
-      router.push('/bookings');
+      const params = new URLSearchParams();
+      if (booking?.id) params.set('bookingId', booking.id);
+      if (email) params.set('email', email);
+      router.push(`/booking-confirmed?${params.toString()}`);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to create booking. Please try again.');
       setSubmitting(false);
