@@ -175,15 +175,13 @@ export default function GalleryPage() {
             <motion.div
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
-              className="relative max-w-6xl max-h-[90vh] w-full"
+              className="relative max-w-6xl w-full flex flex-col items-center"
               onClick={(e) => e.stopPropagation()}
             >
-              <div
-                className="w-full h-full bg-cover bg-center rounded-xl"
-                style={{
-                  backgroundImage: `url(${selectedImage.url})`,
-                  minHeight: '60vh',
-                }}
+              <img
+                src={selectedImage.url}
+                alt={selectedImage.caption || 'Gallery image'}
+                className="w-auto max-w-full max-h-[85vh] rounded-xl object-contain"
               />
               {selectedImage.caption && (
                 <div className="mt-4 rounded-xl border border-dark-border bg-dark-card/80 px-4 py-3 text-center text-sm text-gray-200">

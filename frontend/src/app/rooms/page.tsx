@@ -281,11 +281,7 @@ function RoomsPageContent() {
                           transition={{ duration: 0.35, delay: roomIndex * 0.04 }}
                         >
                           <Link
-                            href={
-                              group.isCategoryBooked
-                                ? `/rooms/${room.id}`
-                                : `/book-now?propertyId=${encodeURIComponent(room.propertyId)}&category=${encodeURIComponent(group.category)}`
-                            }
+                            href={`/rooms/${room.id}`}
                           >
                             <motion.div
                               whileHover={group.isCategoryBooked ? undefined : { y: -8, scale: 1.01 }}
@@ -334,7 +330,7 @@ function RoomsPageContent() {
                                         : 'bg-gold/10 border border-gold text-gold hover:bg-gold hover:text-dark'
                                     }`}
                                   >
-                                    {group.isCategoryBooked ? 'View Details' : 'Book Room'}
+                                    View Details
                                   </motion.div>
                                 </div>
                               </div>
