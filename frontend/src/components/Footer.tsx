@@ -3,16 +3,24 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
-const companyPhone = '050 791 3323';
-const companyEmail = 'thesuite2026@gmail.com';
-const companyAddress = 'Clementine street Tema community 20';
-const whatsappNumber = '233507913323';
+const theSuite = {
+  phone: '050 791 3323',
+  email: 'thesuite2026@gmail.com',
+  address: 'Clementine street Tema community 20',
+  whatsapp: '233507913323',
+};
+
+const kingstelEscape = {
+  phone: '053 954 1143',
+  address: '21 Nii Teiko Abbey Ln, Accra',
+  whatsapp: '233539541143',
+};
 
 export default function Footer() {
   return (
     <footer className="bg-dark-lighter border-t border-dark-border mt-auto w-full">
       <div className="w-full px-4 sm:px-6 lg:px-10 py-10 sm:py-12 lg:py-14">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7 lg:gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7 lg:gap-10">
           {/* Brand */}
           <div>
             <motion.h3
@@ -51,32 +59,54 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Contact */}
+          {/* Contact — The Suite */}
           <div>
-            <h4 className="text-white font-semibold mb-3 text-sm tracking-wide">
-              CONTACT
-            </h4>
+            <h4 className="text-white font-semibold mb-1 text-sm tracking-wide">CONTACT</h4>
+            <p className="text-gold/70 text-xs font-semibold uppercase tracking-widest mb-3">The Suite</p>
             <div className="space-y-2 text-gray-400 text-sm">
-              <p>{companyAddress}</p>
+              <p>{theSuite.address}</p>
               <a
-                href={`mailto:${companyEmail}`}
+                href={`mailto:${theSuite.email}`}
                 className="block transition-colors duration-300 hover:text-gold"
               >
-                {companyEmail}
+                {theSuite.email}
               </a>
               <a
-                href={`tel:${companyPhone.replace(/\s+/g, '')}`}
+                href={`tel:${theSuite.phone.replace(/\s+/g, '')}`}
                 className="block transition-colors duration-300 hover:text-gold"
               >
-                {companyPhone}
+                {theSuite.phone}
               </a>
               <a
-                href={`https://wa.me/${whatsappNumber}`}
+                href={`https://wa.me/${theSuite.whatsapp}`}
                 target="_blank"
                 rel="noreferrer"
                 className="block transition-colors duration-300 hover:text-gold"
               >
-                WhatsApp: {companyPhone}
+                WhatsApp: {theSuite.phone}
+              </a>
+            </div>
+          </div>
+
+          {/* Contact — Kingstel Escape */}
+          <div>
+            <h4 className="text-white font-semibold mb-1 text-sm tracking-wide">&nbsp;</h4>
+            <p className="text-gold/70 text-xs font-semibold uppercase tracking-widest mb-3">Kingstel Escape</p>
+            <div className="space-y-2 text-gray-400 text-sm">
+              <p>{kingstelEscape.address}</p>
+              <a
+                href={`tel:${kingstelEscape.phone.replace(/\s+/g, '')}`}
+                className="block transition-colors duration-300 hover:text-gold"
+              >
+                {kingstelEscape.phone}
+              </a>
+              <a
+                href={`https://wa.me/${kingstelEscape.whatsapp}`}
+                target="_blank"
+                rel="noreferrer"
+                className="block transition-colors duration-300 hover:text-gold"
+              >
+                WhatsApp: {kingstelEscape.phone}
               </a>
             </div>
           </div>
