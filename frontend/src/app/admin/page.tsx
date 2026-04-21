@@ -15,6 +15,7 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
+  Search,
 } from 'lucide-react';
 import PageTransition from '@/components/PageTransition';
 import { api, defaultSiteSettings, Room, Booking, GalleryImage, Property, SiteSettings, formatCurrency, getImageUrl } from '@/lib/api';
@@ -78,6 +79,7 @@ export default function AdminPage() {
   const [siteUploading, setSiteUploading] = useState(false);
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const [expandedBookings, setExpandedBookings] = useState<Record<string, boolean>>({});
+  const [bookingSearch, setBookingSearch] = useState('');
   const [newBookingNotice, setNewBookingNotice] = useState<{ count: number; latestGuest: string } | null>(null);
   const [unseenBookingCount, setUnseenBookingCount] = useState(0);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
@@ -1208,9 +1210,30 @@ export default function AdminPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <h2 className="text-xl text-white font-semibold mb-6">
-                Bookings ({bookings.length})
-              </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <h2 className="text-xl text-white font-semibold">
+                  Bookings ({bookings.length})
+                </h2>
+                <div className="relative w-full sm:w-72">
+                  <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={bookingSearch}
+                    onChange={(e) => setBookingSearch(e.target.value)}
+                    placeholder="Search by name or email…"
+                    className="w-full bg-dark-card border border-dark-border rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-gold transition-colors"
+                  />
+                  {bookingSearch && (
+                    <button
+                      onClick={() => setBookingSearch('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                      aria-label="Clear search"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
+              </div>
 
               {loading ? (
                 <div className="space-y-4">
@@ -1226,9 +1249,23 @@ export default function AdminPage() {
                   <CalendarCheck className="w-12 h-12 text-gray-600 mx-auto mb-4" />
                   <p className="text-gray-400">No bookings yet</p>
                 </div>
-              ) : (
+              ) : (() => {
+                const query = bookingSearch.trim().toLowerCase();
+                const filteredBookings = query
+                  ? bookings.filter(
+                      (b) =>
+                        (b.guestName || '').toLowerCase().includes(query) ||
+                        (b.guestEmail || '').toLowerCase().includes(query)
+                    )
+                  : bookings;
+                return filteredBookings.length === 0 ? (
+                  <div className="text-center py-16 bg-dark-card border border-dark-border rounded-xl">
+                    <Search className="w-10 h-10 text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-400">No bookings match &ldquo;{bookingSearch}&rdquo;</p>
+                  </div>
+                ) : (
                 <div className="space-y-3">
-                  {bookings.map((booking, i) => (
+                  {filteredBookings.map((booking, i) => (
                     <motion.div
                       key={booking.id}
                       initial={{ opacity: 0, y: 10 }}
@@ -1370,7 +1407,9 @@ export default function AdminPage() {
                     </motion.div>
                   ))}
                 </div>
-              )}
+                );
+              })()
+              }
             </motion.div>
           )}
 
