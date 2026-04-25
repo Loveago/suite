@@ -8,8 +8,8 @@ export const metadata: Metadata = {
   title: "THE SUITE | Luxury Room Booking",
   description: "Experience luxury redefined. Premium rooms, world-class amenities, and an unforgettable stay.",
   icons: {
-    icon: "/logo.jpg",
-    apple: "/logo.jpg",
+    icon: "/the-suite-logo.jpg",
+    apple: "/the-suite-logo.jpg",
   },
 };
 
