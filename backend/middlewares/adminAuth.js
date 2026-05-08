@@ -30,6 +30,18 @@ const requireAdminSession = (req, res, next) => {
   return next();
 };
 
+const requireMasterAdmin = (req, res, next) => {
+  if (!req.adminSession) {
+    return res.status(401).json({ error: 'Admin authentication required' });
+  }
+
+  if (req.adminSession.role !== 'master') {
+    return res.status(403).json({ error: 'Only master admin can perform this action' });
+  }
+
+  return next();
+};
+
 const loadScopedProperty = async (req, _res, next) => {
   if (!req.adminSession || req.adminSession.role !== 'property' || !req.adminSession.propertySlug) {
     return next();
@@ -80,5 +92,6 @@ module.exports = {
   loadScopedProperty,
   normalizeProperty,
   requireAdminSession,
+  requireMasterAdmin,
   requireScopedPropertyMatch,
 };

@@ -414,6 +414,13 @@ export default function AdminPage() {
   };
 
   const handleDeleteBooking = async (id: string) => {
+    if (!isMasterAdmin) {
+      const message = 'Only master admin can delete bookings';
+      setError(message);
+      alert(message);
+      return;
+    }
+
     if (!confirm('Are you sure you want to delete this booking?')) return;
     try {
       await api.bookings.delete(id);
@@ -1390,14 +1397,16 @@ export default function AdminPage() {
                                     <span className="block text-xs text-gray-500">Payment</span>
                                     <span className="text-sm text-white capitalize">{booking.paymentStatus}</span>
                                   </div>
-                                  <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={() => handleDeleteBooking(booking.id)}
-                                    className="w-full rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/20"
-                                  >
-                                    Delete booking
-                                  </motion.button>
+                                  {isMasterAdmin && (
+                                    <motion.button
+                                      whileHover={{ scale: 1.02 }}
+                                      whileTap={{ scale: 0.98 }}
+                                      onClick={() => handleDeleteBooking(booking.id)}
+                                      className="w-full rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/20"
+                                    >
+                                      Delete booking
+                                    </motion.button>
+                                  )}
                                 </div>
                               </div>
                             </div>
